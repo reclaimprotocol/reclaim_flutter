@@ -33,7 +33,7 @@ Running the command will add this line to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  reclaim_flutter: ^0.0.1
+  reclaim_flutter: any
 ```
 
 After installation, you can import the package in your Dart code:
