@@ -22,9 +22,12 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^2.0.0
+  
 platforms:
   android:
+    default_package: reclaim_flutter
   ios:
+    default_package: reclaim_flutter
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
