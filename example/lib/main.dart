@@ -20,18 +20,18 @@ class MainApp extends StatelessWidget {
           child: ReclaimHttps(
   requestedProofs: [
     RequestedProof(
-      url: 'https://bookface.ycombinator.com/home',
-      loginUrl: 'https://bookface.ycombinator.com/home',
-      loginCookies: ['_sso.key'],
+      url: 'https://www.amazon.in/',
+      loginUrl: 'https://www.amazon.in/ap/signin?openid.pape.max_auth_age=0&openid.return_to=https%3A%2F%2Fwww.amazon.in%2F%3Fref_%3Dnav_custrec_signin&openid.identity=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.assoc_handle=inflex&openid.mode=checkid_setup&openid.claimed_id=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0',
+      loginCookies: ['x-acbin', 'at-acbin', 'sess-at-acbin', 'sst-acbin', 'i18n-prefs', 'lc-acbin'],
       responseSelections: [
         ResponseSelection(
-          responseMatch: '\{\"id\":{{YC_USER_ID}},.*?waas_admin.*?:{.*?}.*?:\\{.*?}.*?(?:full_name|first_name).*?}',
+          responseMatch: 'nav-prime-1',
         ),
       ],
     ),
   ],
-  title: "YC Login",
-  subTitle: "Prove you have a YC Login",
+  title: "Amazon Prime",
+  subTitle: "Prove you have an Amazon Prime membership",
   cta: "Prove",
   onSuccess: (proofs) {
     // do something
