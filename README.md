@@ -2,23 +2,20 @@
 
 ![Reclaim Logo](https://reclaim-react-native-sdk.s3.ap-south-1.amazonaws.com/Logomark.png)
 
-With `reclaim_flutter` SDK, allow your users to import data from other websites into your app in a secure, privacy-preserving manner using zero-knowledge proofs, right inside your Flutter application.
-
----
+Use the `reclaim_flutter` SDK to enable your users import data securely from other websites into your Flutter application in a privacy-preserving manner using zero-knowledge proofs.
 
 ## 📚 Table of Contents
 1. [Installation](#installation)
 2. [Usage](#usage)
-
----
+3. [Example](#example)
 
 ## 💻 Installation <a name="installation"></a>
 
-Start by adding `reclaim_flutter` to your Flutter project.
+You can add `reclaim_flutter` to your Flutter project using Dart or Flutter.
 
 ### Dart
 
-Run this command in your terminal:
+Run the following command in your terminal:
 
 ```bash
 $ dart pub add reclaim_flutter
@@ -26,19 +23,20 @@ $ dart pub add reclaim_flutter
 
 ### Flutter
 
-Alternatively, you can use Flutter to add the package:
+Alternatively, you can use Flutter to install the package:
 
 ```bash
 $ flutter pub add reclaim_flutter
 ```
-After running the command, it should add the following line to your `pubspec.yaml`:
+
+Running the command will add this line to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
   reclaim_flutter: ^0.0.1
 ```
 
-Then in your Dart code, import the package:
+After installation, you can import the package in your Dart code:
 
 ```dart
 import 'package:reclaim_flutter/reclaim_flutter.dart';
@@ -46,7 +44,7 @@ import 'package:reclaim_flutter/reclaim_flutter.dart';
 
 ## 🚀 Usage <a name="usage"></a>
 
-After installing the package, you can now use ReclaimHttps in your app as follows:
+Once the package is installed, you can start using `ReclaimHttps` in your application as follows:
 
 ```dart
 import 'package:flutter/material.dart';
@@ -101,15 +99,8 @@ class MainApp extends StatelessWidget {
 }
 ```
 
-ReclaimHttps accepts the following properties:
+## 📁 Example <a name="example"></a>
 
-- `url`: The URL from where the information is to be extracted. Typically, this webpage contains the user's data.
-- `loginUrl`: The URL to which the user can log in to access the information. In case authentication is needed to access the data, the user will be redirected here for login.
-- `loginCookies`: An array of cookie names for authentication. If the webpage uses cookies for authentication, you can specify the cookies here. These will be passed along with the request to the url.
-- `responseMatch`: A regular expression used to extract specific information from the webpage. If you need to extract only a specific part of the information from the webpage, a regex pattern can be specified here.
-- `context`: Context message for the proof request (Optional)
-- `title`: The name of your application.
-- `subTitle`: The sub title of the component button, usually a short description about the claim.
-- `cta`: The title of cta button.
-- `onSuccess`: A Function that returns proofs after successful proof generation.
-- `onFail`: A Function that returns Error when the proof generation fails.
+We have included an example project in the root directory to implement a https provider. You can find this [here](https://github.com/reclaimprotocol/reclaim_flutter/tree/main/example).
+
+Running this example will showcase how `reclaim_flutter` can be implemented in a Flutter project. Simply clone the repository, navigate to the `example` folder, install the dependencies, and run the project.
