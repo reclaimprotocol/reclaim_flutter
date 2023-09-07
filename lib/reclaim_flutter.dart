@@ -192,6 +192,8 @@ if(url == "https://sdk-rpc.reclaimprotocol.org/"){
 
   if (match == null) {
     // print('Regex does not match');
+    onFail(Exception("Regex does not match"));
+    Navigator.pop(context);
     throw 'Regex does not match';
   }
 
