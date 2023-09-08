@@ -44,7 +44,9 @@ import 'package:reclaim_flutter/reclaim_flutter.dart';
 
 ## 🚀 Usage <a name="usage"></a>
 
-Once the package is installed, you can start using `ReclaimHttps` in your application as follows:
+Once the package is installed, you can start using ReclaimHttps and ReclaimSwiggy in your application.
+
+For using Https, following is the example implementation:
 
 ```dart
 import 'package:flutter/material.dart';
@@ -98,6 +100,59 @@ class MainApp extends StatelessWidget {
   }
 }
 ```
+
+For using Swiggy, following is the example implementation:
+
+```dart
+import 'package:flutter/material.dart';
+import 'package:reclaim_flutter/reclaim_flutter.dart';
+
+void main() {
+  runApp(const MainApp());
+}
+
+class MainApp extends StatelessWidget {
+  const MainApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+  home: Scaffold(
+
+    body: ListView.builder( 
+      itemCount: 1, // Only one item
+      itemBuilder: (BuildContext context, int index) {
+        return Center(
+          child: ReclaimSwiggy(
+  requestedProofs: [
+    SwiggyRequestedProof(
+      url: 'https://www.swiggy.com/dapi/order/all?order_id=',
+      loginUrl: 'https://www.swiggy.com/auth',
+      loginCookies: ['_session_tid'],
+    ),
+  ],
+  title: "Swiggy",
+  subTitle: "Prove that you are a swiggy user",
+  cta: "Prove",
+  onSuccess: (proofs) {
+    // do something with proofs
+    print('proofs: $proofs');
+  },
+  onFail: (Exception e) {
+    // handle exception
+    print('Error: $e');
+  },
+),
+        );
+      },
+    ),
+  ),
+);
+  }
+}
+```
+
+
 
 ## 📁 Example <a name="example"></a>
 
