@@ -17,6 +17,7 @@ dependencies:
   convert: any
   flutter_ethers: any
   fluttertoast: ^8.1.1
+  http: any
 
 dev_dependencies:
   flutter_test:
