@@ -74,15 +74,15 @@ class WebViewScreen extends StatelessWidget {
          if(response["type"] == "createClaimDone"){
             // print("response reciveved");
             // print(response);
-            onSuccess(response["response"]);
             Navigator.pop(context);
+            onSuccess(response["response"]);
         }
 
         if(response["type"] == "error"){
           onModification('Claim Creation Failed');
           // print(response);
-          onFail(Exception("${response["data"]["message"]}"));
           Navigator.pop(context);
+          onFail(Exception("${response["data"]["message"]}"));
         }
 
       },
@@ -195,8 +195,8 @@ if(url == "https://sdk-rpc.reclaimprotocol.org/"){
 
   if (match == null) {
     // print('Regex does not match');
-    onFail(Exception("Regex does not match"));
     Navigator.pop(context);
+    onFail(Exception("Regex does not match"));
     throw 'Regex does not match';
   }
 
@@ -869,14 +869,14 @@ class SwiggyWebViewScreen extends StatelessWidget {
          if(response["type"] == "createClaimDone"){
             // print("response reciveved");
             // print(response);
+             Navigator.pop(context);
             onSuccess(response["response"]);
-            Navigator.pop(context);
         }
 
         if(response["type"] == "error"){
           onModification('Claim Creation Failed');
-          onFail(Exception("${response["data"]["message"]}"));
           Navigator.pop(context);
+          onFail(Exception("${response["data"]["message"]}"));
         }
 
       },
@@ -1008,8 +1008,8 @@ if(url == "https://sdk-rpc.reclaimprotocol.org/"){
 
   if (match == null) {
     // print('Regex does not match');
-    onFail(Exception("Regex does not match"));
     Navigator.pop(context);
+    onFail(Exception("Regex does not match"));
     throw 'Regex does not match';
   }
 
