@@ -9,12 +9,12 @@ import 'dart:async';
 import 'package:http/http.dart' as http;
 
 
-class SwiggyRequestedProof {
+class SwiggyEqualRequestedProof {
   final String url;
   final String loginUrl;
   final List<String> loginCookies;
   
-  SwiggyRequestedProof({
+  SwiggyEqualRequestedProof({
     required this.url,
     required this.loginUrl,
     required this.loginCookies,
@@ -22,29 +22,31 @@ class SwiggyRequestedProof {
 }
 
 // ignore: must_be_immutable
-class ReclaimSwiggy extends StatefulWidget {
-  final List<SwiggyRequestedProof> requestedProofs;
+class ReclaimSwiggyEqual extends StatefulWidget {
+  final List<SwiggyEqualRequestedProof> requestedProofs;
   final String title;
   final String subTitle;
   String cta;
+  final Function(String claimState) onClaimStateChange;  
   final Function(Map<String, dynamic> proofs) onSuccess;
   final Function(Exception e) onFail;
 
-  ReclaimSwiggy({
+  ReclaimSwiggyEqual({
     Key? key,
     required this.requestedProofs,
     required this.title,
     required this.subTitle,
     required this.cta,
+    required this.onClaimStateChange,
     required this.onSuccess,
     required this.onFail,
   }) : super(key: key);
 
   @override
-  _ReclaimSwiggyState createState() => _ReclaimSwiggyState();
+  _ReclaimSwiggyEqualState createState() => _ReclaimSwiggyEqualState();
 }
 
-class _ReclaimSwiggyState extends State<ReclaimSwiggy> {
+class _ReclaimSwiggyEqualState extends State<ReclaimSwiggyEqual> {
 
   String _claimState = "";
 
@@ -78,12 +80,13 @@ class _ReclaimSwiggyState extends State<ReclaimSwiggy> {
 
         if(response["type"] == "createClaimStep"){
           if(response["step"]["name"] == "creating" ){
-
+          widget.onClaimStateChange('creating');
           setState(() {
             _claimState = 'Creating Claim';
           });
           }
           if(response["step"]["name"] == "witness-done" ){
+            widget.onClaimStateChange('done');
                     setState(() {
             _claimState = 'Claim Created Successfully';
           });
@@ -159,10 +162,10 @@ class _ReclaimSwiggyState extends State<ReclaimSwiggy> {
 
   }
 
-  void _openWebView(BuildContext context, String url, List<SwiggyRequestedProof> requestedProofs, Function(Map<String, dynamic> proofs) onSuccess, Function(Exception e) onFail) {
+  void _openWebView(BuildContext context, String url, List<SwiggyEqualRequestedProof> requestedProofs, Function(Map<String, dynamic> proofs) onSuccess, Function(Exception e) onFail) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => SwiggyWebViewScreen(context: context, url: Uri.parse(url), requestedProofs: requestedProofs, onModification: (webViewData) {setState(() {
+        builder: (_) => SwiggyEqualWebViewScreen(context: context, url: Uri.parse(url), requestedProofs: requestedProofs, onClaimStateChange: widget.onClaimStateChange, onModification: (webViewData) {setState(() {
               _claimState = webViewData; 
             }); }, onParseResult: (parseData) {setState(() {
               parseResult = parseData; 
@@ -235,7 +238,7 @@ Widget build(BuildContext context) {
                                     height: 30,
                                     decoration: const BoxDecoration(
                                       image: DecorationImage(
-                                        image: NetworkImage("https://reclaim-react-native-sdk.s3.ap-south-1.amazonaws.com/Logomark.png"),
+                                        image: NetworkImage("https://reclaim-react-native-sdk.s3.ap-south-1.amazonaws.com/swiggy-logo.png"),
                                         fit: BoxFit.fill,
                                       ),
                                     ),
@@ -416,10 +419,11 @@ Widget build(BuildContext context) {
 }
 
 // ignore: must_be_immutable
-class SwiggyWebViewScreen extends StatelessWidget {
+class SwiggyEqualWebViewScreen extends StatelessWidget {
   BuildContext context;
   Uri url;
-  List<SwiggyRequestedProof> requestedProofs;
+  List<SwiggyEqualRequestedProof> requestedProofs;
+  final Function(String claimState) onClaimStateChange;
   final Function(String webViewData) onModification;
   final Function(dynamic parseData) onParseResult;
   final Function(String cookieStrData) onCookieStrData;
@@ -433,10 +437,10 @@ class SwiggyWebViewScreen extends StatelessWidget {
   late Timer timer;
   bool oneTimeRun = false;
   bool watchDog = false;
-  SwiggyWebViewScreen({Key? key,required this.context, required this.url, required this.requestedProofs, required this.onModification, required this.onParseResult, required this.onCookieStrData, required this.onSuccess, required this.onFail})
+  SwiggyEqualWebViewScreen({Key? key,required this.context, required this.url, required this.requestedProofs, required this.onClaimStateChange, required this.onModification, required this.onParseResult, required this.onCookieStrData, required this.onSuccess, required this.onFail})
       : super(key: key) {
     // Configure WebViewController 
-    cookieManager.clearCookies();
+    // cookieManager.clearCookies();
     controller
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setNavigationDelegate(
@@ -459,6 +463,7 @@ class SwiggyWebViewScreen extends StatelessWidget {
     }
     return false;
   });
+
   if (found) {
     watchDog = true;
     timer.cancel();
@@ -473,6 +478,7 @@ class SwiggyWebViewScreen extends StatelessWidget {
       if (response.statusCode == 200) {
        parseResult = response.body;
        onParseResult(parseResult);
+       onClaimStateChange('initiating');
        Navigator.pop(context);
   } else {
     Navigator.pop(context);
@@ -495,7 +501,6 @@ class SwiggyWebViewScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(),
       body: WebViewWidget(controller: controller),
     );
   }
