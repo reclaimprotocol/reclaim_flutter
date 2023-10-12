@@ -278,27 +278,9 @@ Widget build(BuildContext context) {
     return Column(
       children: [
         Container(
-          width: 358,
+          width: (MediaQuery.of(context).size.width) * 0.9,
           // height: 201,
-          clipBehavior: Clip.antiAlias,
-          decoration: ShapeDecoration(
-            color: Colors.white,
-            shape: RoundedRectangleBorder(
-              side: BorderSide(
-                width: 0.50,
-                color: Colors.black.withOpacity(0.10000000149011612),
-              ),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            shadows: const [
-              BoxShadow(
-                color: Color(0x14000000),
-                blurRadius: 16,
-                offset: Offset(0, 4),
-                spreadRadius: 0,
-              )
-            ],
-          ),
+          clipBehavior: Clip.none,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.start,

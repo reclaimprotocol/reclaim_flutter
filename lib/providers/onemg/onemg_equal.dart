@@ -9,12 +9,12 @@ import 'dart:async';
 import 'package:http/http.dart' as http;
 
 
-class SwiggyEqualRequestedProof {
+class OnemgEqualRequestedProof {
   final String url;
   final String loginUrl;
   final List<String> loginCookies;
   
-  SwiggyEqualRequestedProof({
+  OnemgEqualRequestedProof({
     required this.url,
     required this.loginUrl,
     required this.loginCookies,
@@ -22,8 +22,8 @@ class SwiggyEqualRequestedProof {
 }
 
 // ignore: must_be_immutable
-class ReclaimSwiggyEqual extends StatefulWidget {
-  final List<SwiggyEqualRequestedProof> requestedProofs;
+class ReclaimOnemgEqual extends StatefulWidget {
+  final List<OnemgEqualRequestedProof> requestedProofs;
   final String title;
   final String subTitle;
   String cta;
@@ -31,7 +31,7 @@ class ReclaimSwiggyEqual extends StatefulWidget {
   final Function(Map<String, dynamic> proofs) onSuccess;
   final Function(Exception e) onFail;
 
-  ReclaimSwiggyEqual({
+  ReclaimOnemgEqual({
     Key? key,
     required this.requestedProofs,
     required this.title,
@@ -43,10 +43,10 @@ class ReclaimSwiggyEqual extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _ReclaimSwiggyEqualState createState() => _ReclaimSwiggyEqualState();
+  _ReclaimOnemgEqualState createState() => _ReclaimOnemgEqualState();
 }
 
-class _ReclaimSwiggyEqualState extends State<ReclaimSwiggyEqual> {
+class _ReclaimOnemgEqualState extends State<ReclaimOnemgEqual> {
 
   String _claimState = "";
 
@@ -122,9 +122,7 @@ class _ReclaimSwiggyEqualState extends State<ReclaimSwiggyEqual> {
 
           final mnemonic = wallet.generateMnemonic();
           final walletMnemonic = Wallet.fromMnemonic(mnemonic.join(' '));
-          Map<String, dynamic> jsonObject = jsonDecode(parseResult);
-          jsonObject.remove("csrfToken");
-          String updatedJsonString = jsonEncode(jsonObject);
+
 
 
           Map<String, dynamic> req = {
@@ -133,9 +131,9 @@ class _ReclaimSwiggyEqualState extends State<ReclaimSwiggyEqual> {
               "id": "123",
               "type": "createClaim",
               "request": {
-                "name": "swiggy-equal",
+                "name": "one-mg",
                 "params": {
-                  "userData": updatedJsonString
+                  "userData": parseResult
                 },
                 "secretParams": {
                   "cookieStr": cookieStr,
@@ -162,10 +160,10 @@ class _ReclaimSwiggyEqualState extends State<ReclaimSwiggyEqual> {
 
   }
 
-  void _openWebView(BuildContext context, String url, List<SwiggyEqualRequestedProof> requestedProofs, Function(Map<String, dynamic> proofs) onSuccess, Function(Exception e) onFail) {
+  void _openWebView(BuildContext context, String url, List<OnemgEqualRequestedProof> requestedProofs, Function(Map<String, dynamic> proofs) onSuccess, Function(Exception e) onFail) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => SwiggyEqualWebViewScreen(context: context, url: Uri.parse(url), requestedProofs: requestedProofs, onClaimStateChange: widget.onClaimStateChange, onModification: (webViewData) {setState(() {
+        builder: (_) => OnemgEqualWebViewScreen(context: context, url: Uri.parse(url), requestedProofs: requestedProofs, onClaimStateChange: widget.onClaimStateChange, onModification: (webViewData) {setState(() {
               _claimState = webViewData; 
             }); }, onParseResult: (parseData) {setState(() {
               parseResult = parseData; 
@@ -180,12 +178,12 @@ Widget build(BuildContext context) {
     return Column(
       children: [
         Container(
-          width: 0,
+          width: (MediaQuery.of(context).size.width) * 0.9,
           height: 0,
         child:
         WebViewWidget(controller: controller)),
         Container(
-          width: (MediaQuery.of(context).size.width) * 0.9,
+          width: 358,
           // height: 201,
           clipBehavior: Clip.none,
           child: Column(
@@ -220,7 +218,7 @@ Widget build(BuildContext context) {
                                     height: 30,
                                     decoration: const BoxDecoration(
                                       image: DecorationImage(
-                                        image: NetworkImage("https://reclaim-react-native-sdk.s3.ap-south-1.amazonaws.com/swiggy-logo.png"),
+                                        image: NetworkImage("https://reclaim-react-native-sdk.s3.ap-south-1.amazonaws.com/onemg-logo.png"),
                                         fit: BoxFit.fill,
                                       ),
                                     ),
@@ -401,10 +399,10 @@ Widget build(BuildContext context) {
 }
 
 // ignore: must_be_immutable
-class SwiggyEqualWebViewScreen extends StatelessWidget {
+class OnemgEqualWebViewScreen extends StatelessWidget {
   BuildContext context;
   Uri url;
-  List<SwiggyEqualRequestedProof> requestedProofs;
+  List<OnemgEqualRequestedProof> requestedProofs;
   final Function(String claimState) onClaimStateChange;
   final Function(String webViewData) onModification;
   final Function(dynamic parseData) onParseResult;
@@ -419,7 +417,7 @@ class SwiggyEqualWebViewScreen extends StatelessWidget {
   late Timer timer;
   bool oneTimeRun = false;
   bool watchDog = false;
-  SwiggyEqualWebViewScreen({Key? key,required this.context, required this.url, required this.requestedProofs, required this.onClaimStateChange, required this.onModification, required this.onParseResult, required this.onCookieStrData, required this.onSuccess, required this.onFail})
+  OnemgEqualWebViewScreen({Key? key,required this.context, required this.url, required this.requestedProofs, required this.onClaimStateChange, required this.onModification, required this.onParseResult, required this.onCookieStrData, required this.onSuccess, required this.onFail})
       : super(key: key) {
     // Configure WebViewController 
     cookieManager.clearCookies();
@@ -457,15 +455,16 @@ class SwiggyEqualWebViewScreen extends StatelessWidget {
       'Cookie': cookieStr,
     },
   );
+      parseResult = response.body;
+
       if (response.statusCode == 200) {
-       parseResult = response.body;
-       onParseResult(parseResult);
-       onClaimStateChange('initiating');
+        onParseResult(parseResult);
+        onClaimStateChange('initiating');
        Navigator.pop(context);
   } else {
     Navigator.pop(context);
-    onFail(Exception('Failed to load JSON data from url'));
-    throw Exception('Failed to load JSON data from url');
+    onFail(Exception('No Records Found'));
+    throw Exception('$parseResult');
   }
     
   }
