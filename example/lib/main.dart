@@ -15,20 +15,20 @@ class MainApp extends StatelessWidget {
       itemCount: 1,
       itemBuilder: (BuildContext context, int index) {
         return Center(
-          child: ReclaimSwiggyEqual(
+          child: ReclaimOnemgEqual(
   requestedProofs: [
-    SwiggyEqualRequestedProof(
-      url: 'https://www.swiggy.com/dapi/order/all?order_id=',
-      loginUrl: 'https://www.swiggy.com/auth',
-      loginCookies: ['_session_tid'],
+    OnemgEqualRequestedProof(
+      url: 'https://www.1mg.com/labs_api/v4/bookings',
+      loginUrl: 'https://www.1mg.com/my-account',
+      loginCookies: ['session'],
     ),
   ],
-  title: "Swiggy",
-  subTitle: "• Fetch your Order history",
+  title: "Tata 1mg",
+  subTitle: "•  Fetch your health records",
   cta: "Fetch",
   onClaimStateChange:(claimState){
     // claimState can be 'initiating', 'creating', 'done'
-    // Hide ReclaimSwiggyEqual Widget on claimState === 'initiating' and show fetching animation
+    // Hide ReclaimOnemgEqual Widget on claimState === 'initiating' and show fetching animation
     print(claimState);
   },
   onSuccess: (proofs) {
