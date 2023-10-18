@@ -43,10 +43,10 @@ class ReclaimOnemgEqual extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _ReclaimOnemgEqualState createState() => _ReclaimOnemgEqualState();
+  ReclaimOnemgEqualState createState() => ReclaimOnemgEqualState();
 }
 
-class _ReclaimOnemgEqualState extends State<ReclaimOnemgEqual> {
+class ReclaimOnemgEqualState extends State<ReclaimOnemgEqual> {
 
   String _claimState = "";
 
@@ -159,6 +159,11 @@ class _ReclaimOnemgEqualState extends State<ReclaimOnemgEqual> {
       ..loadRequest(Uri.parse('https://sdk-rpc.reclaimprotocol.org/'));
 
   }
+
+    void triggerOpenWebView() {
+    _openWebView(context, widget.requestedProofs[0].loginUrl, widget.requestedProofs, widget.onSuccess, widget.onFail);
+
+}
 
   void _openWebView(BuildContext context, String url, List<OnemgEqualRequestedProof> requestedProofs, Function(Map<String, dynamic> proofs) onSuccess, Function(Exception e) onFail) {
     Navigator.of(context).push(
