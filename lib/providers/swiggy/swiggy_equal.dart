@@ -43,10 +43,10 @@ class ReclaimSwiggyEqual extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _ReclaimSwiggyEqualState createState() => _ReclaimSwiggyEqualState();
+  ReclaimSwiggyEqualState createState() => ReclaimSwiggyEqualState();
 }
 
-class _ReclaimSwiggyEqualState extends State<ReclaimSwiggyEqual> {
+class ReclaimSwiggyEqualState extends State<ReclaimSwiggyEqual> {
 
   String _claimState = "";
 
@@ -147,7 +147,7 @@ class _ReclaimSwiggyEqualState extends State<ReclaimSwiggyEqual> {
           setState(() {
             _claimState = 'Please wait, Initiating Claim Creation';
           });
-
+          print(req);
           controller.runJavaScript('''postMessage(${jsonEncode(req)})''');
           webviewTimer.cancel();
           webviewOneTimeRun = true;
@@ -161,6 +161,11 @@ class _ReclaimSwiggyEqualState extends State<ReclaimSwiggyEqual> {
       ..loadRequest(Uri.parse('https://sdk-rpc.reclaimprotocol.org/'));
 
   }
+
+  void triggerOpenWebView() {
+    _openWebView(context, widget.requestedProofs[0].loginUrl, widget.requestedProofs, widget.onSuccess, widget.onFail);
+
+}
 
   void _openWebView(BuildContext context, String url, List<SwiggyEqualRequestedProof> requestedProofs, Function(Map<String, dynamic> proofs) onSuccess, Function(Exception e) onFail) {
     Navigator.of(context).push(
