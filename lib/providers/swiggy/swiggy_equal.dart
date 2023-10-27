@@ -28,7 +28,7 @@ class ReclaimSwiggyEqual extends StatefulWidget {
   final String subTitle;
   String cta;
   final Function(String claimState) onClaimStateChange;  
-  final Function(Map<String, dynamic> proofs) onSuccess;
+  final Function(List<dynamic> proofs) onSuccess;
   final Function(Exception e) onFail;
 
   ReclaimSwiggyEqual({
@@ -53,10 +53,12 @@ class ReclaimSwiggyEqualState extends State<ReclaimSwiggyEqual> {
   final cookieManager = WebviewCookieManager();
   String? cookieStr;
   dynamic parseResult;
+  List<dynamic> listOfProofs = [];
   late Timer timer;
   late Timer webviewTimer;
+  var responseCount = 1;
   bool webviewOneTimeRun = false;
-
+  bool createOnce = false;
   // Create WebViewController
   late WebViewController controller;
 
@@ -80,20 +82,25 @@ class ReclaimSwiggyEqualState extends State<ReclaimSwiggyEqual> {
 
         if(response["type"] == "createClaimStep"){
           if(response["step"]["name"] == "creating" ){
+            if(createOnce){
+              return;
+            }
+          createOnce = true;
           widget.onClaimStateChange('creating');
           setState(() {
             _claimState = 'Creating Claim';
           });
           }
-          if(response["step"]["name"] == "witness-done" ){
-            widget.onClaimStateChange('done');
-                    setState(() {
-            _claimState = 'Claim Created Successfully';
-          });
-          }
         }
          if(response["type"] == "createClaimDone"){
-            widget.onSuccess(response["response"]);
+            listOfProofs.add(response["response"]);
+            if(listOfProofs.length == responseCount){
+                widget.onClaimStateChange('done');
+                setState(() {
+                _claimState = 'Claim Created Successfully';
+                });
+                widget.onSuccess(listOfProofs);
+            }       
         }
 
         if(response["type"] == "error"){
@@ -122,35 +129,41 @@ class ReclaimSwiggyEqualState extends State<ReclaimSwiggyEqual> {
 
           final mnemonic = wallet.generateMnemonic();
           final walletMnemonic = Wallet.fromMnemonic(mnemonic.join(' '));
-          Map<String, dynamic> jsonObject = jsonDecode(parseResult);
-          jsonObject.remove("csrfToken");
-          String updatedJsonString = jsonEncode(jsonObject);
-
-
-          Map<String, dynamic> req = {
-              "channel": "Check",
-              "module": "witness-sdk",
-              "id": "123",
-              "type": "createClaim",
-              "request": {
-                "name": "swiggy-equal",
-                "params": {
-                  "userData": updatedJsonString
-                },
-                "secretParams": {
-                  "cookieStr": cookieStr,
-                },
-                "ownerPrivateKey": walletMnemonic.privateKey,
-              }
-            };
 
           setState(() {
             _claimState = 'Please wait, Initiating Claim Creation';
           });
-          print(req);
-          controller.runJavaScript('''postMessage(${jsonEncode(req)})''');
-          webviewTimer.cancel();
           webviewOneTimeRun = true;
+          responseCount = parseResult.length;
+          for (var result in parseResult) {
+              var orderId = result['orderId'];
+              var data = result['parseResult'];
+              Map<String, dynamic> jsonObject = data;
+              jsonObject.remove("csrfToken");
+              String updatedJsonString = jsonEncode(jsonObject);
+
+              Map<String, dynamic> req = {
+                  "channel": "Check",
+                  "module": "witness-sdk",
+                  "id": "123",
+                  "type": "createClaim",
+                  "request": {
+                    "name": "swiggy-equal",
+                    "params": {
+                      "userData": updatedJsonString,
+                      "orderId" : orderId
+                    },
+                    "secretParams": {
+                      "cookieStr": cookieStr,
+                    },
+                    "ownerPrivateKey": walletMnemonic.privateKey,
+                  }
+                };
+                // print(req);
+                controller.runJavaScript('''postMessage(${jsonEncode(req)})''');
+
+          }
+          webviewTimer.cancel(); 
       }
 
 
@@ -167,7 +180,7 @@ class ReclaimSwiggyEqualState extends State<ReclaimSwiggyEqual> {
 
 }
 
-  void _openWebView(BuildContext context, String url, List<SwiggyEqualRequestedProof> requestedProofs, Function(Map<String, dynamic> proofs) onSuccess, Function(Exception e) onFail) {
+  void _openWebView(BuildContext context, String url, List<SwiggyEqualRequestedProof> requestedProofs, Function(List<dynamic> proofs) onSuccess, Function(Exception e) onFail) {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => SwiggyEqualWebViewScreen(context: context, url: Uri.parse(url), requestedProofs: requestedProofs, onClaimStateChange: widget.onClaimStateChange, onModification: (webViewData) {setState(() {
@@ -414,13 +427,15 @@ class SwiggyEqualWebViewScreen extends StatelessWidget {
   final Function(String webViewData) onModification;
   final Function(dynamic parseData) onParseResult;
   final Function(String cookieStrData) onCookieStrData;
-  Function(Map<String, dynamic> proofs) onSuccess;
+  Function(List<dynamic> proofs) onSuccess;
   Function(Exception e) onFail;
   // Create WebViewController
   var controller = WebViewController();
   final cookieManager = WebviewCookieManager();
   late String cookieStr;
   late dynamic parseResult;
+  late dynamic response;
+  late List<dynamic> allResults = [];
   late Timer timer;
   bool oneTimeRun = false;
   bool watchDog = false;
@@ -456,22 +471,38 @@ class SwiggyEqualWebViewScreen extends StatelessWidget {
     timer.cancel();
     cookieStr = gotCookies.map((c) => '${c.name}=${c.value}').join('; ');
     onCookieStrData(cookieStr);
-    final response = await http.get(
-    Uri.parse(requestedProofs[0].url),
-    headers: {
-      'Cookie': cookieStr,
-    },
-  );
-      if (response.statusCode == 200) {
-       parseResult = response.body;
-       onParseResult(parseResult);
-       onClaimStateChange('initiating');
-       Navigator.pop(context);
-  } else {
-    Navigator.pop(context);
-    onFail(Exception('Failed to load JSON data from url'));
-    throw Exception('Failed to load JSON data from url');
-  }
+    var baseUri = Uri.parse(requestedProofs[0].url);
+    var newUri = baseUri; 
+    var lastOrderId = "";
+    for (;;) {
+        response = await http.get(
+            newUri,
+            headers: {'Cookie': cookieStr}
+        );
+        
+        if (response.statusCode == 200) {
+            parseResult = jsonDecode(response.body);
+            allResults.add({"orderId" : lastOrderId, "parseResult": parseResult});
+          
+            if (parseResult['data']['orders'].length == 10) {
+                // get last order id
+                lastOrderId = parseResult['data']['orders'].last['order_id'].toString();
+                // replace end of url with last order id for next request
+                newUri = baseUri.replace(query: 'order_id=$lastOrderId');
+            } else {
+                onParseResult(allResults);
+                onClaimStateChange('initiating');
+                Navigator.pop(context);
+                break;
+            }
+        } else {
+            Navigator.pop(context);
+            onFail(Exception('Failed to load JSON data from url'));
+            throw Exception('Failed to load JSON data from url');
+        }
+    }
+
+
     
   }
   });

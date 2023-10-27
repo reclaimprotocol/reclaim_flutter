@@ -4,8 +4,8 @@ void main() {
   runApp(const MainApp());
 }
 
-// Init a GlobalKey and pass it to ReclaimOnemgEqual widget
-final onemgEqualKey = GlobalKey<ReclaimOnemgEqualState>();
+// Init a GlobalKey and pass it to ReclaimSwiggyEqual widget
+final swiggyEqualKey = GlobalKey<ReclaimSwiggyEqualState>();
 
 class MainApp extends StatelessWidget {
   const MainApp({super.key});
@@ -20,37 +20,37 @@ class MainApp extends StatelessWidget {
             return Center(
               child: Column(
                 children: [
-                  ReclaimOnemgEqual(
-                  key: onemgEqualKey,
-                  requestedProofs: [
-                  OnemgEqualRequestedProof(
-                  url: 'https://www.1mg.com/labs_api/v4/bookings',
-                  loginUrl: 'https://www.1mg.com/my-account',
-                  loginCookies: ['session'],
-                  ),
-                  ],
-                  title: "Tata 1mg",
-                  subTitle: "•  Fetch your health records",
-                  cta: "Fetch",
-                  onClaimStateChange:(claimState){
-                  // claimState can be 'initiating', 'creating', 'done'
-                  // Hide ReclaimOnemgEqual Widget on claimState === 'initiating' and show fetching animation
-                  print(claimState);
-                  },
-                  onSuccess: (proofs) {
-                  print('proofs: $proofs');
-                  // Show a success modal or bottom sheet
-                  },
-                  onFail: (Exception e) {
-                  print('Error: $e');
-                  },
+                  ReclaimSwiggyEqual(
+                    key: swiggyEqualKey,
+                    requestedProofs: [
+                      SwiggyEqualRequestedProof(
+                        url: 'https://www.swiggy.com/dapi/order/all?order_id=',
+                        loginUrl: 'https://www.swiggy.com/auth',
+                        loginCookies: ['_session_tid'],
+                      ),
+                    ],
+                    title: "Swiggy",
+                    subTitle: "Prove that you are a swiggy user",
+                    cta: "Prove",
+                    onClaimStateChange: (claimState) {
+                      // claimState can be 'initiating', 'creating', 'done'
+                      // Hide ReclaimSwiggyEqual Widget on claimState === 'initiating' and show fetching animation
+                      print(claimState);
+                    },
+                    onSuccess: (proofs) {
+                      print('proofs: $proofs');
+                      // Show a success modal or bottom sheet
+                    },
+                    onFail: (Exception e) {
+                      print('Error: $e');
+                    },
                   ),
                   SizedBox(height: 20),
                   ElevatedButton(
                     child: Text('Custom Trigger'),
                     onPressed: () {
 											//The trigger can be called from anywhere
-                      onemgEqualKey.currentState?.triggerOpenWebView();
+                      swiggyEqualKey.currentState?.triggerOpenWebView();
                     },
                   ),
                 ],
