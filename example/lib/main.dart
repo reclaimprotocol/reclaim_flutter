@@ -38,6 +38,7 @@ class MainApp extends StatelessWidget {
                       print(claimState);
                     },
                     onSuccess: (proofs) {
+											// proofs contains a list of proof
                       print('proofs: $proofs');
                       // Show a success modal or bottom sheet
                     },
