@@ -1,4 +1,5 @@
 library reclaim_flutter;
+
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_cookie_manager/webview_cookie_manager.dart';
@@ -8,12 +9,11 @@ import 'dart:convert';
 import 'dart:async';
 import 'package:http/http.dart' as http;
 
-
 class SwiggyEqualRequestedProof {
   final String url;
   final String loginUrl;
   final List<String> loginCookies;
-  
+
   SwiggyEqualRequestedProof({
     required this.url,
     required this.loginUrl,
@@ -27,7 +27,7 @@ class ReclaimSwiggyEqual extends StatefulWidget {
   final String title;
   final String subTitle;
   String cta;
-  final Function(String claimState) onClaimStateChange;  
+  final Function(String claimState) onClaimStateChange;
   final Function(List<dynamic> proofs) onSuccess;
   final Function(Exception e) onFail;
 
@@ -47,7 +47,6 @@ class ReclaimSwiggyEqual extends StatefulWidget {
 }
 
 class ReclaimSwiggyEqualState extends State<ReclaimSwiggyEqual> {
-
   String _claimState = "";
 
   final cookieManager = WebviewCookieManager();
@@ -70,138 +69,148 @@ class ReclaimSwiggyEqualState extends State<ReclaimSwiggyEqual> {
     configureController();
   }
 
-    void configureController() {
-    // Configure WebViewController 
+  void configureController() {
+    // Configure WebViewController
 
     controller
-    ..addJavaScriptChannel(
-      'Check',
-      onMessageReceived: (JavaScriptMessage message) {
-          
+      ..addJavaScriptChannel(
+        'Check',
+        onMessageReceived: (JavaScriptMessage message) {
           var response = jsonDecode(message.message);
 
-        if(response["type"] == "createClaimStep"){
-          if(response["step"]["name"] == "creating" ){
-            if(createOnce){
-              return;
+          if (response["type"] == "createClaimStep") {
+            if (response["step"]["name"] == "creating") {
+              if (createOnce) {
+                return;
+              }
+              createOnce = true;
+              widget.onClaimStateChange('creating');
+              setState(() {
+                _claimState = 'Creating Claim';
+              });
             }
-          createOnce = true;
-          widget.onClaimStateChange('creating');
-          setState(() {
-            _claimState = 'Creating Claim';
-          });
           }
-        }
-         if(response["type"] == "createClaimDone"){
+          if (response["type"] == "createClaimDone") {
             listOfProofs.add(response["response"]);
-            if(listOfProofs.length == responseCount){
-                widget.onClaimStateChange('done');
-                setState(() {
+            if (listOfProofs.length == responseCount) {
+              widget.onClaimStateChange('done');
+              setState(() {
                 _claimState = 'Claim Created Successfully';
-                });
-                widget.onSuccess(listOfProofs);
-            }       
-        }
+              });
+              widget.onSuccess(listOfProofs);
+            }
+          }
 
-        if(response["type"] == "error"){
-          setState(() {
-            _claimState = 'Claim Creation Failed';
-          });
-          widget.onFail(Exception("${response["data"]["message"]}"));
-        }
-
-      },
-    )
+          if (response["type"] == "error") {
+            setState(() {
+              _claimState = 'Claim Creation Failed';
+            });
+            widget.onFail(Exception("${response["data"]["message"]}"));
+          }
+        },
+      )
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setNavigationDelegate(
-         NavigationDelegate(
-           onProgress: (int progress) {
-           },
-           onPageFinished: (String url) async { 
+        NavigationDelegate(
+          onProgress: (int progress) {},
+          onPageFinished: (String url) async {
+            webviewTimer =
+                Timer.periodic(const Duration(seconds: 2), (Timer t) async {
+              if (webviewOneTimeRun) {
+                return;
+              }
 
-    webviewTimer = Timer.periodic(const Duration(seconds: 2), (Timer t) async{
+              if (cookieStr != null && parseResult != null) {
+                final mnemonic = wallet.generateMnemonic();
+                final walletMnemonic = Wallet.fromMnemonic(mnemonic.join(' '));
 
-      if(webviewOneTimeRun){
-        return;
-      }
+                setState(() {
+                  _claimState = 'Please wait, Initiating Claim Creation';
+                });
+                webviewOneTimeRun = true;
+                responseCount = parseResult.length;
+                for (var result in parseResult) {
+                  var orderId = result['orderId'];
+                  var data = result['parseResult'];
+                  Map<String, dynamic> jsonObject = data;
+                  jsonObject.remove("csrfToken");
+                  String updatedJsonString = jsonEncode(jsonObject);
 
-      if(cookieStr != null && parseResult != null){
-
-          final mnemonic = wallet.generateMnemonic();
-          final walletMnemonic = Wallet.fromMnemonic(mnemonic.join(' '));
-
-          setState(() {
-            _claimState = 'Please wait, Initiating Claim Creation';
-          });
-          webviewOneTimeRun = true;
-          responseCount = parseResult.length;
-          for (var result in parseResult) {
-              var orderId = result['orderId'];
-              var data = result['parseResult'];
-              Map<String, dynamic> jsonObject = data;
-              jsonObject.remove("csrfToken");
-              String updatedJsonString = jsonEncode(jsonObject);
-
-              Map<String, dynamic> req = {
-                  "channel": "Check",
-                  "module": "witness-sdk",
-                  "id": "123",
-                  "type": "createClaim",
-                  "request": {
-                    "name": "swiggy-equal",
-                    "params": {
-                      "userData": updatedJsonString,
-                      "orderId" : orderId
-                    },
-                    "secretParams": {
-                      "cookieStr": cookieStr,
-                    },
-                    "ownerPrivateKey": walletMnemonic.privateKey,
-                  }
-                };
-                // print(req);
-                controller.runJavaScript('''postMessage(${jsonEncode(req)})''');
-
-          }
-          webviewTimer.cancel(); 
-      }
-
-
-      });
-  },
-         ),
-       )
+                  Map<String, dynamic> req = {
+                    "channel": "Check",
+                    "module": "witness-sdk",
+                    "id": "123",
+                    "type": "createClaim",
+                    "request": {
+                      "name": "swiggy-equal",
+                      "params": {
+                        "userData": updatedJsonString,
+                        "orderId": orderId
+                      },
+                      "secretParams": {
+                        "cookieStr": cookieStr,
+                      },
+                      "ownerPrivateKey": walletMnemonic.privateKey,
+                    }
+                  };
+                  // print(req);
+                  controller
+                      .runJavaScript('''postMessage(${jsonEncode(req)})''');
+                }
+                webviewTimer.cancel();
+              }
+            });
+          },
+        ),
+      )
       ..loadRequest(Uri.parse('https://sdk-rpc.reclaimprotocol.org/'));
-
   }
 
   void triggerOpenWebView() {
-    _openWebView(context, widget.requestedProofs[0].loginUrl, widget.requestedProofs, widget.onSuccess, widget.onFail);
+    _openWebView(context, widget.requestedProofs[0].loginUrl,
+        widget.requestedProofs, widget.onSuccess, widget.onFail);
+  }
 
-}
-
-  void _openWebView(BuildContext context, String url, List<SwiggyEqualRequestedProof> requestedProofs, Function(List<dynamic> proofs) onSuccess, Function(Exception e) onFail) {
+  void _openWebView(
+      BuildContext context,
+      String url,
+      List<SwiggyEqualRequestedProof> requestedProofs,
+      Function(List<dynamic> proofs) onSuccess,
+      Function(Exception e) onFail) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => SwiggyEqualWebViewScreen(context: context, url: Uri.parse(url), requestedProofs: requestedProofs, onClaimStateChange: widget.onClaimStateChange, onModification: (webViewData) {setState(() {
-              _claimState = webViewData; 
-            }); }, onParseResult: (parseData) {setState(() {
-              parseResult = parseData; 
-            }); },onCookieStrData: (cookieStrData) {setState(() {
-              cookieStr = cookieStrData; 
-            }); }, onSuccess: onSuccess, onFail: onFail),
+        builder: (_) => SwiggyEqualWebViewScreen(
+            context: context,
+            url: Uri.parse(url),
+            requestedProofs: requestedProofs,
+            onClaimStateChange: widget.onClaimStateChange,
+            onModification: (webViewData) {
+              setState(() {
+                _claimState = webViewData;
+              });
+            },
+            onParseResult: (parseData) {
+              setState(() {
+                parseResult = parseData;
+              });
+            },
+            onCookieStrData: (cookieStrData) {
+              setState(() {
+                cookieStr = cookieStrData;
+              });
+            },
+            onSuccess: onSuccess,
+            onFail: onFail),
       ),
     );
   }
-    @override
-Widget build(BuildContext context) {
+
+  @override
+  Widget build(BuildContext context) {
     return Column(
       children: [
         Container(
-          width: 0,
-          height: 0,
-        child:
-        WebViewWidget(controller: controller)),
+            width: 0, height: 0, child: WebViewWidget(controller: controller)),
         Container(
           width: (MediaQuery.of(context).size.width) * 0.9,
           // height: 201,
@@ -238,7 +247,8 @@ Widget build(BuildContext context) {
                                     height: 30,
                                     decoration: const BoxDecoration(
                                       image: DecorationImage(
-                                        image: NetworkImage("https://reclaim-react-native-sdk.s3.ap-south-1.amazonaws.com/swiggy-logo.png"),
+                                        image: NetworkImage(
+                                            "https://reclaim-react-native-sdk.s3.ap-south-1.amazonaws.com/swiggy-logo.png"),
                                         fit: BoxFit.fill,
                                       ),
                                     ),
@@ -251,8 +261,10 @@ Widget build(BuildContext context) {
                                     height: 16,
                                     child: Column(
                                       mainAxisSize: MainAxisSize.min,
-                                      mainAxisAlignment: MainAxisAlignment.start,
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         SizedBox(
                                           width: 322,
@@ -289,7 +301,7 @@ Widget build(BuildContext context) {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                     Text(
+                    Text(
                       widget.title,
                       style: const TextStyle(
                         color: Colors.black,
@@ -313,7 +325,8 @@ Widget build(BuildContext context) {
                             child: Text(
                               widget.subTitle,
                               style: TextStyle(
-                                color: Colors.black.withOpacity(0.6000000238418579),
+                                color: Colors.black
+                                    .withOpacity(0.6000000238418579),
                                 fontSize: 13,
                                 fontFamily: 'Manrope',
                                 fontWeight: FontWeight.w500,
@@ -327,89 +340,102 @@ Widget build(BuildContext context) {
                   ],
                 ),
               ),
-          _claimState.isEmpty ?  Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                clipBehavior: Clip.antiAlias,
-                decoration: const BoxDecoration(),
-                child:  ClipRRect(
-  borderRadius: BorderRadius.circular(12),
-  child: Material(
-    color: const Color(0xFF322EED),
-    child: InkWell(
-      onTap: (){
-        _openWebView(context, widget.requestedProofs[0].loginUrl, widget.requestedProofs, widget.onSuccess, widget.onFail);
-      }, 
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: SizedBox( 
-              height: 48,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child:  Row(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text(
-                          widget.cta,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 15,
-                            fontFamily: 'Manrope',
-                            fontWeight: FontWeight.w700,
-                            height: 1.33,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    ),
-  ),
-)
-              ) : Container( 
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                child: SizedBox(
+              _claimState.isEmpty
+                  ? Container(
                       width: double.infinity,
-                      height: 16,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          SizedBox(
-                            width: 322,
-                            child: Text(
-                              _claimState,
-                              style: TextStyle(
-                                color: Colors.black.withOpacity(0.6000000238418579),
-                                fontSize: 13,
-                                fontFamily: 'Manrope',
-                                fontWeight: FontWeight.w500,
-                                height: 1.23,
-                              ),
+                      padding: const EdgeInsets.all(16),
+                      clipBehavior: Clip.antiAlias,
+                      decoration: const BoxDecoration(),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Material(
+                          color: const Color(0xFF322EED),
+                          child: InkWell(
+                            onTap: () {
+                              _openWebView(
+                                  context,
+                                  widget.requestedProofs[0].loginUrl,
+                                  widget.requestedProofs,
+                                  widget.onSuccess,
+                                  widget.onFail);
+                            },
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: SizedBox(
+                                    height: 48,
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                      children: [
+                                        Container(
+                                          width: double.infinity,
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 20),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.center,
+                                            children: [
+                                              Text(
+                                                widget.cta,
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 15,
+                                                  fontFamily: 'Manrope',
+                                                  fontWeight: FontWeight.w700,
+                                                  height: 1.33,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ],
+                        ),
+                      ))
+                  : Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 16),
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: 16,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SizedBox(
+                              width: 322,
+                              child: Text(
+                                _claimState,
+                                style: TextStyle(
+                                  color: Colors.black
+                                      .withOpacity(0.6000000238418579),
+                                  fontSize: 13,
+                                  fontFamily: 'Manrope',
+                                  fontWeight: FontWeight.w500,
+                                  height: 1.23,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-              ),
             ],
           ),
         ),
@@ -439,81 +465,90 @@ class SwiggyEqualWebViewScreen extends StatelessWidget {
   late Timer timer;
   bool oneTimeRun = false;
   bool watchDog = false;
-  SwiggyEqualWebViewScreen({Key? key,required this.context, required this.url, required this.requestedProofs, required this.onClaimStateChange, required this.onModification, required this.onParseResult, required this.onCookieStrData, required this.onSuccess, required this.onFail})
+  SwiggyEqualWebViewScreen(
+      {Key? key,
+      required this.context,
+      required this.url,
+      required this.requestedProofs,
+      required this.onClaimStateChange,
+      required this.onModification,
+      required this.onParseResult,
+      required this.onCookieStrData,
+      required this.onSuccess,
+      required this.onFail})
       : super(key: key) {
-    // Configure WebViewController 
+    // Configure WebViewController
     cookieManager.clearCookies();
     controller
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setNavigationDelegate(
-         NavigationDelegate(
-           onProgress: (int progress) {
-           },
-           onPageFinished: (String url) async { 
+        NavigationDelegate(
+          onProgress: (int progress) {},
+          onPageFinished: (String url) async {
+            if (!oneTimeRun) {
+              timer =
+                  Timer.periodic(const Duration(seconds: 2), (Timer t) async {
+                if (watchDog) {
+                  return;
+                }
+                final gotCookies =
+                    await cookieManager.getCookies(requestedProofs[0].loginUrl);
+                List<String> foundCookies = [];
+                bool found = requestedProofs[0].loginCookies.every((cookie) {
+                  if (gotCookies.indexWhere((item) => item.name == cookie) !=
+                      -1) {
+                    foundCookies.add(cookie);
+                    return true;
+                  }
+                  return false;
+                });
 
-  if(!oneTimeRun){ 
-    timer = Timer.periodic(const Duration(seconds: 2), (Timer t) async{
-    if(watchDog){
-      return;
-    }
-  final gotCookies = await cookieManager.getCookies(requestedProofs[0].loginUrl);
-  List<String> foundCookies = [];
-  bool found = requestedProofs[0].loginCookies.every((cookie) {
-    if (gotCookies.indexWhere((item) => item.name == cookie) != -1){
-      foundCookies.add(cookie);
-      return true;
-    }
-    return false;
-  });
+                if (found) {
+                  watchDog = true;
+                  timer.cancel();
+                  cookieStr =
+                      gotCookies.map((c) => '${c.name}=${c.value}').join('; ');
+                  onCookieStrData(cookieStr);
+                  var baseUri = Uri.parse(requestedProofs[0].url);
+                  var newUri = baseUri;
+                  var lastOrderId = "";
+                  for (;;) {
+                    response =
+                        await http.get(newUri, headers: {'Cookie': cookieStr});
 
-  if (found) {
-    watchDog = true;
-    timer.cancel();
-    cookieStr = gotCookies.map((c) => '${c.name}=${c.value}').join('; ');
-    onCookieStrData(cookieStr);
-    var baseUri = Uri.parse(requestedProofs[0].url);
-    var newUri = baseUri; 
-    var lastOrderId = "";
-    for (;;) {
-        response = await http.get(
-            newUri,
-            headers: {'Cookie': cookieStr}
-        );
-        
-        if (response.statusCode == 200) {
-            parseResult = jsonDecode(response.body);
-            allResults.add({"orderId" : lastOrderId, "parseResult": parseResult});
-          
-            if (parseResult['data']['orders'].length == 10) {
-                // get last order id
-                lastOrderId = parseResult['data']['orders'].last['order_id'].toString();
-                // replace end of url with last order id for next request
-                newUri = baseUri.replace(query: 'order_id=$lastOrderId');
-            } else {
-                onParseResult(allResults);
-                onClaimStateChange('initiating');
-                Navigator.pop(context);
-                break;
+                    if (response.statusCode == 200) {
+                      parseResult = jsonDecode(response.body);
+                      allResults.add(
+                          {"orderId": lastOrderId, "parseResult": parseResult});
+
+                      if (parseResult['data']['orders'].length == 10) {
+                        // get last order id
+                        lastOrderId = parseResult['data']['orders']
+                            .last['order_id']
+                            .toString();
+                        // replace end of url with last order id for next request
+                        newUri =
+                            baseUri.replace(query: 'order_id=$lastOrderId');
+                      } else {
+                        onParseResult(allResults);
+                        onClaimStateChange('initiating');
+                        Navigator.pop(context);
+                        break;
+                      }
+                    } else {
+                      Navigator.pop(context);
+                      onFail(Exception('Failed to load JSON data from url'));
+                      throw Exception('Failed to load JSON data from url');
+                    }
+                  }
+                }
+              });
+              oneTimeRun = false;
             }
-        } else {
-            Navigator.pop(context);
-            onFail(Exception('Failed to load JSON data from url'));
-            throw Exception('Failed to load JSON data from url');
-        }
-    }
-
-
-    
-  }
-  });
-  oneTimeRun = false;
-  }
-
-},
-         ),
-       )
+          },
+        ),
+      )
       ..loadRequest(url);
-      
   }
 
   @override

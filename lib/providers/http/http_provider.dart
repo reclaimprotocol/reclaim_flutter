@@ -6,7 +6,6 @@ import 'package:flutter_ethers/flutter_ethers.dart';
 import 'dart:convert';
 import 'package:fluttertoast/fluttertoast.dart';
 
-
 // ignore: must_be_immutable
 class WebViewScreen extends StatelessWidget {
   BuildContext context;
@@ -20,193 +19,194 @@ class WebViewScreen extends StatelessWidget {
   final cookieManager = WebviewCookieManager();
   late String cookieStr;
   late dynamic parseResult;
-  WebViewScreen({Key? key,required this.context, required this.url, required this.requestedProofs, required this.onModification, required this.onSuccess, required this.onFail})
+  WebViewScreen(
+      {Key? key,
+      required this.context,
+      required this.url,
+      required this.requestedProofs,
+      required this.onModification,
+      required this.onSuccess,
+      required this.onFail})
       : super(key: key) {
-    // Configure WebViewController 
+    // Configure WebViewController
     cookieManager.clearCookies();
     controller
       ..addJavaScriptChannel(
-  'Login',
-  onMessageReceived: (JavaScriptMessage message) {
-    // print(message.message);
-    parseResult = parseHtml(message.message, requestedProofs[0].responseSelections[0].responseMatch);
-    // print("cookie str is ${cookieStr}");
-    controller.runJavaScript('''Claim.postMessage("Init")''');
-  },
-)
-    ..addJavaScriptChannel(
-      'Check',
-      onMessageReceived: (JavaScriptMessage message) {
-          
+        'Login',
+        onMessageReceived: (JavaScriptMessage message) {
+          // print(message.message);
+          parseResult = parseHtml(message.message,
+              requestedProofs[0].responseSelections[0].responseMatch);
+          // print("cookie str is ${cookieStr}");
+          controller.runJavaScript('''Claim.postMessage("Init")''');
+        },
+      )
+      ..addJavaScriptChannel(
+        'Check',
+        onMessageReceived: (JavaScriptMessage message) {
           var response = jsonDecode(message.message);
           // print(message.message);
-        if(response["type"] == "createClaimStep"){
-          if(response["step"]["name"] == "creating" ){
-            Fluttertoast.showToast(
-        msg: "Creating Claim",
-        toastLength: Toast.LENGTH_LONG,
-        gravity: ToastGravity.CENTER,
-        timeInSecForIosWeb: 2,
-        textColor: Colors.white,
-        fontSize: 16.0,
-        backgroundColor: const Color.fromARGB(255, 86, 86, 86)
-        
-    );
-          onModification('Creating Claim');
+          if (response["type"] == "createClaimStep") {
+            if (response["step"]["name"] == "creating") {
+              Fluttertoast.showToast(
+                  msg: "Creating Claim",
+                  toastLength: Toast.LENGTH_LONG,
+                  gravity: ToastGravity.CENTER,
+                  timeInSecForIosWeb: 2,
+                  textColor: Colors.white,
+                  fontSize: 16.0,
+                  backgroundColor: const Color.fromARGB(255, 86, 86, 86));
+              onModification('Creating Claim');
+            }
+            if (response["step"]["name"] == "witness-done") {
+              Fluttertoast.showToast(
+                  msg: "Claim Created Successfully",
+                  toastLength: Toast.LENGTH_LONG,
+                  gravity: ToastGravity.CENTER,
+                  timeInSecForIosWeb: 2,
+                  textColor: Colors.white,
+                  fontSize: 16.0,
+                  backgroundColor: const Color.fromARGB(255, 86, 86, 86));
+              onModification('Claim Created Successfully');
+            }
           }
-          if(response["step"]["name"] == "witness-done" ){
-            Fluttertoast.showToast(
-        msg: "Claim Created Successfully",
-        toastLength: Toast.LENGTH_LONG,
-        gravity: ToastGravity.CENTER,
-        timeInSecForIosWeb: 2,
-        textColor: Colors.white,
-        fontSize: 16.0,
-        backgroundColor: const Color.fromARGB(255, 86, 86, 86)
-        
-    );
-          onModification('Claim Created Successfully');
-          }
-        }
-         if(response["type"] == "createClaimDone"){
+          if (response["type"] == "createClaimDone") {
             // print("response reciveved");
             // print(response);
             Navigator.pop(context);
             onSuccess(response["response"]);
-        }
+          }
 
-        if(response["type"] == "error"){
-          onModification('Claim Creation Failed');
-          // print(response);
-          Navigator.pop(context);
-          onFail(Exception("${response["data"]["message"]}"));
-        }
-
-      },
-    )
+          if (response["type"] == "error") {
+            onModification('Claim Creation Failed');
+            // print(response);
+            Navigator.pop(context);
+            onFail(Exception("${response["data"]["message"]}"));
+          }
+        },
+      )
       ..addJavaScriptChannel(
-  'Claim',
-  onMessageReceived: (JavaScriptMessage message) async{
-    // print("create Claim");
-    // print(message.message);
-    controller.loadRequest(Uri.parse("https://sdk-rpc.reclaimprotocol.org/"));
-    Fluttertoast.showToast(
-        msg: "Initiating Claim Creation",
-        toastLength: Toast.LENGTH_LONG,
-        gravity: ToastGravity.CENTER,
-        timeInSecForIosWeb: 2,
-        textColor: Colors.white,
-        fontSize: 16.0,
-        backgroundColor: const Color.fromARGB(255, 86, 86, 86)
-        
-    );
-    onModification('Please wait, Initiating Claim Creation');
-  },
-)
+        'Claim',
+        onMessageReceived: (JavaScriptMessage message) async {
+          // print("create Claim");
+          // print(message.message);
+          controller
+              .loadRequest(Uri.parse("https://sdk-rpc.reclaimprotocol.org/"));
+          Fluttertoast.showToast(
+              msg: "Initiating Claim Creation",
+              toastLength: Toast.LENGTH_LONG,
+              gravity: ToastGravity.CENTER,
+              timeInSecForIosWeb: 2,
+              textColor: Colors.white,
+              fontSize: 16.0,
+              backgroundColor: const Color.fromARGB(255, 86, 86, 86));
+          onModification('Please wait, Initiating Claim Creation');
+        },
+      )
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setNavigationDelegate(
-         NavigationDelegate(
-           onProgress: (int progress) {
+        NavigationDelegate(
+          onProgress: (int progress) {
             //  print("Loading ${progress}%");
-           },
-           onPageFinished: (String url) async { 
-  // print("on page finished ${url}");
-if(url == "https://sdk-rpc.reclaimprotocol.org/"){
-    final mnemonic = wallet.generateMnemonic();
-    final walletMnemonic = Wallet.fromMnemonic(mnemonic.join(' '));
-    //  print(walletMnemonic.privateKey);
-    //  print(walletMnemonic.publicKey);
-    //  print(walletMnemonic.address);
-     Map<String, dynamic> req = {
-        "channel": "Check",
-        "module": "witness-sdk",
-        "id": "123",
-        "type": "createClaim",
-        "request": {
-          "name": "http",
-          "params": {
-            "url": requestedProofs[0].url,
-            "method": "GET",
-            "responseSelections": [
-              {
-                "responseMatch": parseResult["result"], 
+          },
+          onPageFinished: (String url) async {
+            if (url == "https://sdk-rpc.reclaimprotocol.org/") {
+              final mnemonic = wallet.generateMnemonic();
+              final walletMnemonic = Wallet.fromMnemonic(mnemonic.join(' '));
+
+              Map<String, dynamic> req = {
+                "channel": "Check",
+                "module": "witness-sdk",
+                "id": "123",
+                "type": "createClaim",
+                "request": {
+                  "name": "http",
+                  "params": {
+                    "url": requestedProofs[0].url,
+                    "method": "GET",
+                    "responseSelections": [
+                      {
+                        "responseMatch": parseResult["result"],
+                      }
+                    ]
+                  },
+                  "secretParams": {
+                    "cookieStr": cookieStr,
+                  },
+                  "ownerPrivateKey": walletMnemonic.privateKey,
+                }
+              };
+
+              controller.runJavaScript('''postMessage(${jsonEncode(req)})''');
+              return;
+            }
+            final gotCookies =
+                await cookieManager.getCookies(requestedProofs[0].loginUrl);
+            List<String> foundCookies = [];
+            bool found = requestedProofs[0].loginCookies.every((cookie) {
+              if (gotCookies.indexWhere((item) => item.name == cookie) != -1) {
+                foundCookies.add(cookie);
+                return true;
               }
-            ]
-          },
-          "secretParams": {
-            "cookieStr": cookieStr,
-          },
-          "ownerPrivateKey": walletMnemonic.privateKey,
-        }
-      };
+              return false;
+            });
 
-    controller.runJavaScript('''postMessage(${jsonEncode(req)})''');
-  return;
-}
-  final gotCookies = await cookieManager.getCookies(requestedProofs[0].loginUrl);
-  List<String> foundCookies = [];
-  bool found = requestedProofs[0].loginCookies.every((cookie) {
-    if (gotCookies.indexWhere((item) => item.name == cookie) != -1){
-      foundCookies.add(cookie);
-      return true;
-    }
-    return false;
-  });
-
-  if (found) {
-    // print("Found the required tokens");
-    cookieStr = gotCookies.map((c) => '${c.name}=${c.value}').join('; ');
-    // print(cookieStr);
-    // print(requestedProofs[0].url);
-    // print(url);
-    if(requestedProofs[0].url.replaceAll(RegExp(r'/$'), '') == url.replaceAll(RegExp(r'/$'), '')){
-        controller.runJavaScript('''Login.postMessage(document.documentElement.outerHTML)''');
-    }else{
-      controller.loadRequest(Uri.parse(requestedProofs[0].url));
-    }
-    
-  }
-},
-         ),
-       )
+            if (found) {
+              // print("Found the required tokens");
+              cookieStr =
+                  gotCookies.map((c) => '${c.name}=${c.value}').join('; ');
+              // print(cookieStr);
+              // print(requestedProofs[0].url);
+              // print(url);
+              if (requestedProofs[0].url.replaceAll(RegExp(r'/$'), '') ==
+                  url.replaceAll(RegExp(r'/$'), '')) {
+                controller.runJavaScript(
+                    '''Login.postMessage(document.documentElement.outerHTML)''');
+              } else {
+                controller.loadRequest(Uri.parse(requestedProofs[0].url));
+              }
+            }
+          },
+        ),
+      )
       ..loadRequest(url);
-      
   }
 
   Map<String, dynamic> parseHtml(String html, String regexString) {
-  // replace {{VARIABLE}} with (.*?), and save the variable names
-  List<String> variableNames = [];
-  String realRegexString = regexString.replaceAllMapped(
-    RegExp(r'{{(.*?)}}'),
-    (match) {
-      variableNames.add(match.group(1)!);
-      return '(.*?)';
-    },
-  );
+    // replace {{VARIABLE}} with (.*?), and save the variable names
+    List<String> variableNames = [];
+    String realRegexString = regexString.replaceAllMapped(
+      RegExp(r'{{(.*?)}}'),
+      (match) {
+        variableNames.add(match.group(1)!);
+        return '(.*?)';
+      },
+    );
 
-  // create a RegExp object
-  RegExp regex = RegExp(realRegexString, multiLine: true, dotAll: true);
+    // create a RegExp object
+    RegExp regex = RegExp(realRegexString, multiLine: true, dotAll: true);
 
-  // run the regex on the html
-  Match? match = regex.firstMatch(html);
+    // run the regex on the html
+    Match? match = regex.firstMatch(html);
 
-  if (match == null) {
-    // print('Regex does not match');
-    Navigator.pop(context);
-    onFail(Exception("Regex does not match"));
-    throw 'Regex does not match';
+    if (match == null) {
+      // print('Regex does not match');
+      Navigator.pop(context);
+      onFail(Exception("Regex does not match"));
+      throw 'Regex does not match';
+    }
+
+    // replace the variable placeholders in the original regex string with their values
+    String result = regexString;
+    Map<String, dynamic> params = {};
+    for (int i = 0; i < variableNames.length; i++) {
+      result =
+          result.replaceAll('{{${variableNames[i]}}}', match.group(i + 1)!);
+      params[variableNames[i]] = match.group(i + 1)!;
+    }
+
+    return {'result': result, 'params': params};
   }
-
-  // replace the variable placeholders in the original regex string with their values
-  String result = regexString;
-  Map<String, dynamic> params = {};
-  for (int i = 0; i < variableNames.length; i++) {
-    result = result.replaceAll('{{${variableNames[i]}}}', match.group(i + 1)!);
-    params[variableNames[i]] = match.group(i + 1)!;
-  }
-
-  return {'result': result, 'params': params};
-}
 
   @override
   Widget build(BuildContext context) {
@@ -222,13 +222,12 @@ class RequestedProof {
   final String loginUrl;
   final List<String> loginCookies;
   final List<ResponseSelection> responseSelections;
-  
-  RequestedProof({
-    required this.url,
-    required this.loginUrl,
-    required this.loginCookies,
-    required this.responseSelections
-  });
+
+  RequestedProof(
+      {required this.url,
+      required this.loginUrl,
+      required this.loginCookies,
+      required this.responseSelections});
 }
 
 class ResponseSelection {
@@ -261,20 +260,33 @@ class ReclaimHttps extends StatefulWidget {
 }
 
 class _ReclaimHttpsState extends State<ReclaimHttps> {
-
   String _claimState = "";
-  
-  void _openWebView(BuildContext context, String url, List<RequestedProof> requestedProofs, Function(Map<String, dynamic> proofs) onSuccess, Function(Exception e) onFail) {
+
+  void _openWebView(
+      BuildContext context,
+      String url,
+      List<RequestedProof> requestedProofs,
+      Function(Map<String, dynamic> proofs) onSuccess,
+      Function(Exception e) onFail) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => WebViewScreen(context: context, url: Uri.parse(url), requestedProofs: requestedProofs, onModification: (webViewData) {setState(() {
-              _claimState = webViewData; 
-            }); }, onSuccess: onSuccess, onFail: onFail),
+        builder: (_) => WebViewScreen(
+            context: context,
+            url: Uri.parse(url),
+            requestedProofs: requestedProofs,
+            onModification: (webViewData) {
+              setState(() {
+                _claimState = webViewData;
+              });
+            },
+            onSuccess: onSuccess,
+            onFail: onFail),
       ),
     );
   }
-    @override
-Widget build(BuildContext context) {
+
+  @override
+  Widget build(BuildContext context) {
     return Column(
       children: [
         Container(
@@ -313,7 +325,8 @@ Widget build(BuildContext context) {
                                     height: 30,
                                     decoration: const BoxDecoration(
                                       image: DecorationImage(
-                                        image: NetworkImage("https://reclaim-react-native-sdk.s3.ap-south-1.amazonaws.com/Logomark.png"),
+                                        image: NetworkImage(
+                                            "https://reclaim-react-native-sdk.s3.ap-south-1.amazonaws.com/Logomark.png"),
                                         fit: BoxFit.fill,
                                       ),
                                     ),
@@ -326,8 +339,10 @@ Widget build(BuildContext context) {
                                     height: 16,
                                     child: Column(
                                       mainAxisSize: MainAxisSize.min,
-                                      mainAxisAlignment: MainAxisAlignment.start,
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         SizedBox(
                                           width: 322,
@@ -364,7 +379,7 @@ Widget build(BuildContext context) {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                     Text(
+                    Text(
                       widget.title,
                       style: const TextStyle(
                         color: Colors.black,
@@ -388,7 +403,8 @@ Widget build(BuildContext context) {
                             child: Text(
                               widget.subTitle,
                               style: TextStyle(
-                                color: Colors.black.withOpacity(0.6000000238418579),
+                                color: Colors.black
+                                    .withOpacity(0.6000000238418579),
                                 fontSize: 13,
                                 fontFamily: 'Manrope',
                                 fontWeight: FontWeight.w500,
@@ -402,93 +418,106 @@ Widget build(BuildContext context) {
                   ],
                 ),
               ),
-          _claimState.isEmpty ?  Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                clipBehavior: Clip.antiAlias,
-                decoration: const BoxDecoration(),
-                child:  ClipRRect(
-  borderRadius: BorderRadius.circular(12),
-  child: Material(
-    color: const Color(0xFF322EED),
-    child: InkWell(
-      onTap: (){
-        _openWebView(context, widget.requestedProofs[0].loginUrl, widget.requestedProofs, widget.onSuccess, widget.onFail);
-      }, 
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: SizedBox( 
-              height: 48,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child:  Row(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text(
-                          widget.cta,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 15,
-                            fontFamily: 'Manrope',
-                            fontWeight: FontWeight.w700,
-                            height: 1.33,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    ),
-  ),
-)
-              ) : Container( 
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                child: SizedBox(
+              _claimState.isEmpty
+                  ? Container(
                       width: double.infinity,
-                      height: 16,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          SizedBox(
-                            width: 322,
-                            child: Text(
-                              _claimState,
-                              style: TextStyle(
-                                color: Colors.black.withOpacity(0.6000000238418579),
-                                fontSize: 13,
-                                fontFamily: 'Manrope',
-                                fontWeight: FontWeight.w500,
-                                height: 1.23,
-                              ),
+                      padding: const EdgeInsets.all(16),
+                      clipBehavior: Clip.antiAlias,
+                      decoration: const BoxDecoration(),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Material(
+                          color: const Color(0xFF322EED),
+                          child: InkWell(
+                            onTap: () {
+                              _openWebView(
+                                  context,
+                                  widget.requestedProofs[0].loginUrl,
+                                  widget.requestedProofs,
+                                  widget.onSuccess,
+                                  widget.onFail);
+                            },
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: SizedBox(
+                                    height: 48,
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                      children: [
+                                        Container(
+                                          width: double.infinity,
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 20),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.center,
+                                            children: [
+                                              Text(
+                                                widget.cta,
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 15,
+                                                  fontFamily: 'Manrope',
+                                                  fontWeight: FontWeight.w700,
+                                                  height: 1.33,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ],
+                        ),
+                      ))
+                  : Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 16),
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: 16,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SizedBox(
+                              width: 322,
+                              child: Text(
+                                _claimState,
+                                style: TextStyle(
+                                  color: Colors.black
+                                      .withOpacity(0.6000000238418579),
+                                  fontSize: 13,
+                                  fontFamily: 'Manrope',
+                                  fontWeight: FontWeight.w500,
+                                  height: 1.23,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-              ),
             ],
           ),
         ),
       ],
     );
   }
-}  
+}
