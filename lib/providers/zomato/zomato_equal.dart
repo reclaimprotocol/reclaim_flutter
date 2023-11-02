@@ -3,8 +3,9 @@ library reclaim_flutter;
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_cookie_manager/webview_cookie_manager.dart';
-import 'package:wallet/wallet.dart' as wallet;
-import 'package:flutter_ethers/flutter_ethers.dart';
+import 'package:web3dart/crypto.dart';
+import 'dart:math';
+import 'package:web3dart/web3dart.dart';
 import 'dart:convert';
 import 'dart:async';
 import 'package:http/http.dart' as http;
@@ -121,8 +122,10 @@ class ReclaimZomatoEqualState extends State<ReclaimZomatoEqual> {
               }
 
               if (cookieStr != null && parseResult != null) {
-                final mnemonic = wallet.generateMnemonic();
-                final walletMnemonic = Wallet.fromMnemonic(mnemonic.join(' '));
+                var random = Random.secure();
+                EthPrivateKey priKey = EthPrivateKey.createRandom(random);
+                String privateKeyHex = bytesToHex(priKey.privateKey);
+                String privateKey = '0x${privateKeyHex.substring(2)}';
 
                 setState(() {
                   _claimState = 'Please wait, Initiating Claim Creation';
@@ -152,7 +155,7 @@ class ReclaimZomatoEqualState extends State<ReclaimZomatoEqual> {
                         "cookieStr":
                             "cid=2c4e3ed9-0308-4d16-a237-3a5c99f7e944; zat=kAj8JuDFDFVvSuyNPhrQFNbcNZNZgo-ZBE_IuFkQeAU.HTckpLRb24BIdj2X-t9o80rz2heR3Q9-yVo1KEI-ngw;",
                       },
-                      "ownerPrivateKey": walletMnemonic.privateKey,
+                      "ownerPrivateKey": privateKey,
                     }
                   };
                   controller

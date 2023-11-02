@@ -3,8 +3,9 @@ library reclaim_flutter;
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_cookie_manager/webview_cookie_manager.dart';
-import 'package:wallet/wallet.dart' as wallet;
-import 'package:flutter_ethers/flutter_ethers.dart';
+import 'package:web3dart/crypto.dart';
+import 'dart:math';
+import 'package:web3dart/web3dart.dart';
 import 'dart:convert';
 import 'dart:async';
 import 'package:http/http.dart' as http;
@@ -110,8 +111,10 @@ class _ReclaimSwiggyState extends State<ReclaimSwiggy> {
               }
 
               if (cookieStr != null && parseResult != null) {
-                final mnemonic = wallet.generateMnemonic();
-                final walletMnemonic = Wallet.fromMnemonic(mnemonic.join(' '));
+                var random = Random.secure();
+                EthPrivateKey priKey = EthPrivateKey.createRandom(random);
+                String privateKeyHex = bytesToHex(priKey.privateKey);
+                String privateKey = '0x${privateKeyHex.substring(2)}';
                 Map<String, dynamic> jsonObject = jsonDecode(parseResult);
                 jsonObject.remove("csrfToken");
                 String updatedJsonString = jsonEncode(jsonObject);
@@ -127,7 +130,7 @@ class _ReclaimSwiggyState extends State<ReclaimSwiggy> {
                     "secretParams": {
                       "cookieStr": cookieStr,
                     },
-                    "ownerPrivateKey": walletMnemonic.privateKey,
+                    "ownerPrivateKey": privateKey,
                   }
                 };
 
