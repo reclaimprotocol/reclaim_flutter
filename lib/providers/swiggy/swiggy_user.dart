@@ -113,8 +113,12 @@ class _ReclaimSwiggyState extends State<ReclaimSwiggy> {
               if (cookieStr != null && parseResult != null) {
                 var random = Random.secure();
                 EthPrivateKey priKey = EthPrivateKey.createRandom(random);
-                String privateKeyHex = bytesToHex(priKey.privateKey);
-                String privateKey = '0x${privateKeyHex.substring(2)}';
+                String privateKey =
+                    bytesToHex(priKey.privateKey, include0x: true);
+                var diff = privateKey.length - 66;
+                if (diff > 0) {
+                  privateKey = '0x${privateKey.substring(2 + diff)}';
+                }
                 Map<String, dynamic> jsonObject = jsonDecode(parseResult);
                 jsonObject.remove("csrfToken");
                 String updatedJsonString = jsonEncode(jsonObject);
