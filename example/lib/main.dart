@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:reclaim_flutter/reclaim_flutter.dart';
+
+
 void main() {
   runApp(const MainApp());
 }
 
-// Init a GlobalKey and pass it to ReclaimSwiggyEqual widget
-final swiggyEqualKey = GlobalKey<ReclaimSwiggyEqualState>();
+// Init a GlobalKey and pass it to ReclaimZomatoEqual widget
+final zomatoEqualKey = GlobalKey<ReclaimZomatoEqualState>();
 
 class MainApp extends StatelessWidget {
   const MainApp({super.key});
@@ -20,25 +22,25 @@ class MainApp extends StatelessWidget {
             return Center(
               child: Column(
                 children: [
-                  ReclaimSwiggyEqual(
-                    key: swiggyEqualKey,
+                  ReclaimZomatoEqual(
+                    key: zomatoEqualKey,
                     requestedProofs: [
-                      SwiggyEqualRequestedProof(
-                        url: 'https://www.swiggy.com/dapi/order/all?order_id=',
-                        loginUrl: 'https://www.swiggy.com/auth',
-                        loginCookies: ['_session_tid'],
+                      ZomatoEqualRequestedProof(
+                        url: 'https://www.zomato.com/webroutes/user/orders?page=1',
+                        loginUrl: 'https://www.zomato.com',
+                        loginCookies: ['cid', 'zat'],
                       ),
                     ],
-                    title: "Swiggy",
-                    subTitle: "Prove that you are a swiggy user",
+                    title: "Zomato",
+                    subTitle: "Prove that you are a Zomato user",
                     cta: "Prove",
                     onClaimStateChange: (claimState) {
                       // claimState can be 'initiating', 'creating', 'done'
-                      // Hide ReclaimSwiggyEqual Widget on claimState === 'initiating' and show fetching animation
+                      // Hide ReclaimZomatoEqual Widget on claimState === 'initiating' and show fetching animation
                       print(claimState);
                     },
-                    onSuccess: (proofs) {
-											// proofs contains a list of proof
+                    onSuccess: (proofs) async{
+                      // proofs contains a list of proof
                       print('proofs: $proofs');
                       // Show a success modal or bottom sheet
                     },
@@ -46,12 +48,12 @@ class MainApp extends StatelessWidget {
                       print('Error: $e');
                     },
                   ),
-                  SizedBox(height: 20),
-                  ElevatedButton(
+                    SizedBox(height: 20),
+                    ElevatedButton(
                     child: Text('Custom Trigger'),
                     onPressed: () {
 											//The trigger can be called from anywhere
-                      swiggyEqualKey.currentState?.triggerOpenWebView();
+                      zomatoEqualKey.currentState?.triggerOpenWebView();
                     },
                   ),
                 ],
