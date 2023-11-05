@@ -28,7 +28,8 @@ class ReclaimSwiggy extends StatefulWidget {
   final String title;
   final String subTitle;
   String cta;
-  final Function(Map<String, dynamic> proofs) onSuccess;
+  final Function(String claimState) onClaimStateChange;
+  final Function(List<dynamic> proofs) onSuccess;
   final Function(Exception e) onFail;
 
   ReclaimSwiggy({
@@ -37,24 +38,28 @@ class ReclaimSwiggy extends StatefulWidget {
     required this.title,
     required this.subTitle,
     required this.cta,
+    required this.onClaimStateChange,
     required this.onSuccess,
     required this.onFail,
   }) : super(key: key);
 
   @override
-  _ReclaimSwiggyState createState() => _ReclaimSwiggyState();
+  ReclaimSwiggyState createState() => ReclaimSwiggyState();
 }
 
-class _ReclaimSwiggyState extends State<ReclaimSwiggy> {
+class ReclaimSwiggyState extends State<ReclaimSwiggy> {
   String _claimState = "";
 
   final cookieManager = WebviewCookieManager();
   String? cookieStr;
   dynamic parseResult;
+  List<dynamic> listOfProofs = [];
   late Timer timer;
   late Timer webviewTimer;
+  var responseCount = 1;
+  var failedCounter = 0;
   bool webviewOneTimeRun = false;
-
+  bool createOnce = false;
   // Create WebViewController
   late WebViewController controller;
 
@@ -77,21 +82,33 @@ class _ReclaimSwiggyState extends State<ReclaimSwiggy> {
 
           if (response["type"] == "createClaimStep") {
             if (response["step"]["name"] == "creating") {
+              if (createOnce) {
+                return;
+              }
+              createOnce = true;
+              widget.onClaimStateChange('creating');
               setState(() {
                 _claimState = 'Creating Claim';
               });
             }
-            if (response["step"]["name"] == "witness-done") {
+          }
+          if (response["type"] == "createClaimDone") {
+            listOfProofs.add(response["response"]);
+            if (listOfProofs.length == responseCount) {
+              widget.onClaimStateChange('done');
               setState(() {
                 _claimState = 'Claim Created Successfully';
               });
+              widget.onSuccess(listOfProofs);
             }
           }
-          if (response["type"] == "createClaimDone") {
-            widget.onSuccess(response["response"]);
-          }
 
-          if (response["type"] == "error") {
+        if(response["type"] == "error"){ 
+            failedCounter++;
+        }
+
+        double  failedPercentage = (failedCounter / responseCount) * 100;
+        if(failedPercentage >= 70){
             setState(() {
               _claimState = 'Claim Creation Failed';
             });
@@ -119,32 +136,41 @@ class _ReclaimSwiggyState extends State<ReclaimSwiggy> {
                 if (diff > 0) {
                   privateKey = '0x${privateKey.substring(2 + diff)}';
                 }
-                Map<String, dynamic> jsonObject = jsonDecode(parseResult);
-                jsonObject.remove("csrfToken");
-                String updatedJsonString = jsonEncode(jsonObject);
-
-                Map<String, dynamic> req = {
-                  "channel": "Check",
-                  "module": "witness-sdk",
-                  "id": "123",
-                  "type": "createClaim",
-                  "request": {
-                    "name": "swiggy-equal",
-                    "params": {"userData": updatedJsonString},
-                    "secretParams": {
-                      "cookieStr": cookieStr,
-                    },
-                    "ownerPrivateKey": privateKey,
-                  }
-                };
 
                 setState(() {
                   _claimState = 'Please wait, Initiating Claim Creation';
                 });
-
-                controller.runJavaScript('''postMessage(${jsonEncode(req)})''');
-                webviewTimer.cancel();
                 webviewOneTimeRun = true;
+                responseCount = parseResult.length;
+                for (var result in parseResult) {
+                  var orderId = result['orderId'];
+                  var data = result['parseResult'];
+                  Map<String, dynamic> jsonObject = data;
+                  jsonObject.remove("csrfToken");
+                  String updatedJsonString = jsonEncode(jsonObject);
+
+                  Map<String, dynamic> req = {
+                    "channel": "Check",
+                    "module": "witness-sdk",
+                    "id": "123",
+                    "type": "createClaim",
+                    "request": {
+                      "name": "swiggy-equal",
+                      "params": {
+                        "userData": updatedJsonString,
+                        "orderId": orderId
+                      },
+                      "secretParams": {
+                        "cookieStr": cookieStr,
+                      },
+                      "ownerPrivateKey": privateKey,
+                    }
+                  };
+                  // print(req);
+                  controller
+                      .runJavaScript('''postMessage(${jsonEncode(req)})''');
+                }
+                webviewTimer.cancel();
               }
             });
           },
@@ -153,11 +179,16 @@ class _ReclaimSwiggyState extends State<ReclaimSwiggy> {
       ..loadRequest(Uri.parse('https://sdk-rpc.reclaimprotocol.org/'));
   }
 
+  void triggerOpenWebView() {
+    _openWebView(context, widget.requestedProofs[0].loginUrl,
+        widget.requestedProofs, widget.onSuccess, widget.onFail);
+  }
+
   void _openWebView(
       BuildContext context,
       String url,
       List<SwiggyRequestedProof> requestedProofs,
-      Function(Map<String, dynamic> proofs) onSuccess,
+      Function(List<dynamic> proofs) onSuccess,
       Function(Exception e) onFail) {
     Navigator.of(context).push(
       MaterialPageRoute(
@@ -165,6 +196,7 @@ class _ReclaimSwiggyState extends State<ReclaimSwiggy> {
             context: context,
             url: Uri.parse(url),
             requestedProofs: requestedProofs,
+            onClaimStateChange: widget.onClaimStateChange,
             onModification: (webViewData) {
               setState(() {
                 _claimState = webViewData;
@@ -193,27 +225,9 @@ class _ReclaimSwiggyState extends State<ReclaimSwiggy> {
         Container(
             width: 0, height: 0, child: WebViewWidget(controller: controller)),
         Container(
-          width: 358,
+          width: (MediaQuery.of(context).size.width) * 0.9,
           // height: 201,
-          clipBehavior: Clip.antiAlias,
-          decoration: ShapeDecoration(
-            color: Colors.white,
-            shape: RoundedRectangleBorder(
-              side: BorderSide(
-                width: 0.50,
-                color: Colors.black.withOpacity(0.10000000149011612),
-              ),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            shadows: const [
-              BoxShadow(
-                color: Color(0x14000000),
-                blurRadius: 16,
-                offset: Offset(0, 4),
-                spreadRadius: 0,
-              )
-            ],
-          ),
+          clipBehavior: Clip.none,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.start,
@@ -247,7 +261,7 @@ class _ReclaimSwiggyState extends State<ReclaimSwiggy> {
                                     decoration: const BoxDecoration(
                                       image: DecorationImage(
                                         image: NetworkImage(
-                                            "https://reclaim-react-native-sdk.s3.ap-south-1.amazonaws.com/Logomark.png"),
+                                            "https://reclaim-react-native-sdk.s3.ap-south-1.amazonaws.com/swiggy-logo.png"),
                                         fit: BoxFit.fill,
                                       ),
                                     ),
@@ -448,16 +462,19 @@ class SwiggyWebViewScreen extends StatelessWidget {
   BuildContext context;
   Uri url;
   List<SwiggyRequestedProof> requestedProofs;
+  final Function(String claimState) onClaimStateChange;
   final Function(String webViewData) onModification;
   final Function(dynamic parseData) onParseResult;
   final Function(String cookieStrData) onCookieStrData;
-  Function(Map<String, dynamic> proofs) onSuccess;
+  Function(List<dynamic> proofs) onSuccess;
   Function(Exception e) onFail;
   // Create WebViewController
   var controller = WebViewController();
   final cookieManager = WebviewCookieManager();
   late String cookieStr;
   late dynamic parseResult;
+  late dynamic response;
+  late List<dynamic> allResults = [];
   late Timer timer;
   bool oneTimeRun = false;
   bool watchDog = false;
@@ -466,6 +483,7 @@ class SwiggyWebViewScreen extends StatelessWidget {
       required this.context,
       required this.url,
       required this.requestedProofs,
+      required this.onClaimStateChange,
       required this.onModification,
       required this.onParseResult,
       required this.onCookieStrData,
@@ -503,20 +521,26 @@ class SwiggyWebViewScreen extends StatelessWidget {
                   cookieStr =
                       gotCookies.map((c) => '${c.name}=${c.value}').join('; ');
                   onCookieStrData(cookieStr);
-                  final response = await http.get(
-                    Uri.parse(requestedProofs[0].url),
-                    headers: {
-                      'Cookie': cookieStr,
-                    },
-                  );
-                  if (response.statusCode == 200) {
-                    parseResult = response.body;
-                    onParseResult(parseResult);
-                    Navigator.pop(context);
-                  } else {
-                    Navigator.pop(context);
-                    onFail(Exception('Failed to load JSON data from url'));
-                    throw Exception('Failed to load JSON data from url');
+                  var baseUri = Uri.parse(requestedProofs[0].url);
+                  var newUri = baseUri;
+                  var lastOrderId = "";
+                  for (;;) {
+                    response =
+                        await http.get(newUri, headers: {'Cookie': cookieStr});
+
+                    if (response.statusCode == 200) {
+                      parseResult = jsonDecode(response.body);
+                      allResults.add(
+                          {"orderId": lastOrderId, "parseResult": parseResult});
+                        onParseResult(allResults);
+                        onClaimStateChange('initiating');
+                        Navigator.pop(context);
+                        break;
+                    } else {
+                      Navigator.pop(context);
+                      onFail(Exception('Failed to load JSON data from url'));
+                      throw Exception('Failed to load JSON data from url');
+                    }
                   }
                 }
               });

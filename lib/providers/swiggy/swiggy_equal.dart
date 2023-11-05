@@ -57,6 +57,7 @@ class ReclaimSwiggyEqualState extends State<ReclaimSwiggyEqual> {
   late Timer timer;
   late Timer webviewTimer;
   var responseCount = 1;
+  var failedCounter = 0;
   bool webviewOneTimeRun = false;
   bool createOnce = false;
   // Create WebViewController
@@ -102,7 +103,12 @@ class ReclaimSwiggyEqualState extends State<ReclaimSwiggyEqual> {
             }
           }
 
-          if (response["type"] == "error") {
+        if(response["type"] == "error"){ 
+            failedCounter++;
+        }
+
+        double  failedPercentage = (failedCounter / responseCount) * 100;
+        if(failedPercentage >= 70){
             setState(() {
               _claimState = 'Claim Creation Failed';
             });
