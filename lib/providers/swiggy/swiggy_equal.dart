@@ -53,11 +53,13 @@ class ReclaimSwiggyEqualState extends State<ReclaimSwiggyEqual> {
   final cookieManager = WebviewCookieManager();
   String? cookieStr;
   dynamic parseResult;
+  dynamic latestError;
   List<dynamic> listOfProofs = [];
   late Timer timer;
   late Timer webviewTimer;
   var responseCount = 1;
   var failedCounter = 0;
+  var succCounter = 0;
   bool webviewOneTimeRun = false;
   bool createOnce = false;
   // Create WebViewController
@@ -92,28 +94,34 @@ class ReclaimSwiggyEqualState extends State<ReclaimSwiggyEqual> {
               });
             }
           }
-          if (response["type"] == "createClaimDone") {
-            listOfProofs.add(response["response"]);
-            if (listOfProofs.length == responseCount) {
-              widget.onClaimStateChange('done');
-              setState(() {
-                _claimState = 'Claim Created Successfully';
-              });
-              widget.onSuccess(listOfProofs);
-            }
-          }
 
-        if(response["type"] == "error"){ 
-            failedCounter++;
+        if (response["type"] == "createClaimDone") {
+            listOfProofs.add(response["response"]);
+            succCounter++;
         }
 
-        double  failedPercentage = (failedCounter / responseCount) * 100;
-        if(failedPercentage >= 70){
-            setState(() {
-              _claimState = 'Claim Creation Failed';
-            });
-            widget.onFail(Exception("${response["data"]["message"]}"));
-          }
+        if (response["type"] == "error"){ 
+            failedCounter++;
+            latestError = response;
+        }
+
+        // Check if the total number of responses (whether success or fail) equals to the responseCount
+        if(succCounter + failedCounter == responseCount) {
+            double failedPercentage = (failedCounter / responseCount) * 100;
+
+            if(failedPercentage >= 70) {
+                setState(() {
+                  _claimState = 'Claim Creation Failed';
+                });
+                widget.onFail(Exception("${latestError["data"]["message"]}"));
+            } else {
+                setState(() {
+                  _claimState = 'Claim Created Successfully';
+                });
+                widget.onSuccess(listOfProofs);
+            }
+        }
+
         },
       )
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
