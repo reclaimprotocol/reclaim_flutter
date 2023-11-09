@@ -20,6 +20,7 @@ class WebViewScreen extends StatelessWidget {
   final cookieManager = WebviewCookieManager();
   late String cookieStr;
   late dynamic parseResult;
+  late String element;
   WebViewScreen(
       {Key? key,
       required this.context,
@@ -32,6 +33,54 @@ class WebViewScreen extends StatelessWidget {
     // Configure WebViewController
     cookieManager.clearCookies();
     controller
+      ..addJavaScriptChannel(
+        'RpcRequest',
+        onMessageReceived: (JavaScriptMessage message) {
+          print('message in RpcRequests is: ');
+          print(message);
+          print('RpcRequest.message is: ');
+          print(message.message);
+          final xPath = requestedProofs[0].responseSelections[0].xPath;
+          final jsonPath = requestedProofs[0].responseSelections[0].jsonPath;
+          element = message.message;
+
+          if (xPath != null) {
+            extractHtmlElement(message.message, xPath, jsonPath != null);
+          } else if (jsonPath != null) {
+            extractJSONValueIndex(message.message, jsonPath);
+          } else {
+            controller.runJavaScript(
+                '''Login.postMessage(document.documentElement.outerHTML)''');
+          }
+        },
+      )
+      ..addJavaScriptChannel(
+        'XPath',
+        onMessageReceived: (JavaScriptMessage message) {
+          print('message in XPath is: ');
+          print(message);
+          print('message.message is: ');
+          print(message.message);
+          final jsonPath = requestedProofs[0].responseSelections[0].jsonPath;
+
+          if (jsonPath != null) {
+            extractJSONValueIndex(message.message, jsonPath);
+          } else {
+            controller
+                .runJavaScript('''Login.postMessage(${message.message})''');
+          }
+        },
+      )
+      ..addJavaScriptChannel(
+        'JsonPath',
+        onMessageReceived: (JavaScriptMessage message) {
+          print('message in XPath is: ');
+          print(message);
+          print('message.message is: ');
+          print(message.message);
+          controller.runJavaScript('''Login.postMessage(${message.message})''');
+        },
+      )
       ..addJavaScriptChannel(
         'Login',
         onMessageReceived: (JavaScriptMessage message) {
@@ -168,7 +217,7 @@ class WebViewScreen extends StatelessWidget {
               if (requestedProofs[0].url.replaceAll(RegExp(r'/$'), '') ==
                   url.replaceAll(RegExp(r'/$'), '')) {
                 controller.runJavaScript(
-                    '''Login.postMessage(document.documentElement.outerHTML)''');
+                    '''RpcRequest.postMessage(document.documentElement.outerHTML)''');
               } else {
                 controller.loadRequest(Uri.parse(requestedProofs[0].url));
               }
@@ -177,6 +226,45 @@ class WebViewScreen extends StatelessWidget {
         ),
       )
       ..loadRequest(url);
+  }
+
+  String generateRequestId() {
+    String randomString =
+        Random().nextDouble().toStringAsFixed(16).substring(2);
+    return randomString;
+  }
+
+  void extractHtmlElement(String html, String xPath, bool contentsOnly) {
+    String requestId = generateRequestId();
+    Map<String, dynamic> req = {
+      "module": 'witness-sdk',
+      "id": requestId,
+      "type": "extractHtmlElement",
+      "channel": 'ReactNativeWebView',
+      "request": {
+        "html": html,
+        "xpathExpression": xPath,
+        "contentsOnly": contentsOnly
+      },
+    };
+
+    controller.runJavaScript('''XPath.postMessage(${jsonEncode(req)})''');
+  }
+
+  void extractJSONValueIndex(String json, String jsonPath) {
+    String requestId = generateRequestId();
+    Map<String, dynamic> req = {
+      "module": 'witness-sdk',
+      "id": requestId,
+      "type": "extractJSONValueIndex",
+      "channel": 'ReactNativeWebView',
+      "request": {
+        "json": json,
+        "jsonPath": jsonPath,
+      },
+    };
+
+    controller.runJavaScript('''JsonPath.postMessage(${jsonEncode(req)})''');
   }
 
   Map<String, dynamic> parseHtml(String html, String regexString) {
@@ -238,9 +326,11 @@ class RequestedProof {
 }
 
 class ResponseSelection {
+  final String? jsonPath;
+  final String? xPath;
   final String responseMatch;
 
-  ResponseSelection({required this.responseMatch});
+  ResponseSelection({this.jsonPath, this.xPath, required this.responseMatch});
 }
 
 // ignore: must_be_immutable
