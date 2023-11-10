@@ -35,10 +35,8 @@ class WebViewScreen extends StatelessWidget {
       ..addJavaScriptChannel(
         'Login',
         onMessageReceived: (JavaScriptMessage message) {
-          // print(message.message);
           parseResult = parseHtml(message.message,
               requestedProofs[0].responseSelections[0].responseMatch);
-          // print("cookie str is ${cookieStr}");
           controller.runJavaScript('''Claim.postMessage("Init")''');
         },
       )
@@ -46,7 +44,6 @@ class WebViewScreen extends StatelessWidget {
         'Check',
         onMessageReceived: (JavaScriptMessage message) {
           var response = jsonDecode(message.message);
-          // print(message.message);
           if (response["type"] == "createClaimStep") {
             if (response["step"]["name"] == "creating") {
               Fluttertoast.showToast(
@@ -72,15 +69,12 @@ class WebViewScreen extends StatelessWidget {
             }
           }
           if (response["type"] == "createClaimDone") {
-            // print("response reciveved");
-            // print(response);
             Navigator.pop(context);
             onSuccess(response["response"]);
           }
 
           if (response["type"] == "error") {
             onModification('Claim Creation Failed');
-            // print(response);
             Navigator.pop(context);
             onFail(Exception("${response["data"]["message"]}"));
           }
@@ -89,8 +83,6 @@ class WebViewScreen extends StatelessWidget {
       ..addJavaScriptChannel(
         'Claim',
         onMessageReceived: (JavaScriptMessage message) async {
-          // print("create Claim");
-          // print(message.message);
           controller
               .loadRequest(Uri.parse("https://sdk-rpc.reclaimprotocol.org/"));
           Fluttertoast.showToast(
@@ -159,12 +151,8 @@ class WebViewScreen extends StatelessWidget {
             });
 
             if (found) {
-              // print("Found the required tokens");
               cookieStr =
                   gotCookies.map((c) => '${c.name}=${c.value}').join('; ');
-              // print(cookieStr);
-              // print(requestedProofs[0].url);
-              // print(url);
               if (requestedProofs[0].url.replaceAll(RegExp(r'/$'), '') ==
                   url.replaceAll(RegExp(r'/$'), '')) {
                 controller.runJavaScript(
@@ -197,7 +185,6 @@ class WebViewScreen extends StatelessWidget {
     Match? match = regex.firstMatch(html);
 
     if (match == null) {
-      // print('Regex does not match');
       Navigator.pop(context);
       onFail(Exception("Regex does not match"));
       throw 'Regex does not match';
@@ -297,234 +284,232 @@ class _ReclaimHttpsState extends State<ReclaimHttps> {
     return Column(
       children: [
         Container(
-          width: (MediaQuery.of(context).size.width) * 0.9,
-          // height: 201,
+          width: MediaQuery.of(context).size.width * 0.9,
           clipBehavior: Clip.none,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          SizedBox(
-                            width: 358,
-                            height: 40,
-                            child: Stack(
-                              children: [
-                                Positioned(
-                                  left: 3.75,
-                                  top: 6.25,
-                                  child: Container(
-                                    width: 30,
-                                    height: 30,
-                                    decoration: const BoxDecoration(
-                                      image: DecorationImage(
-                                        image: NetworkImage(
-                                            "https://reclaim-react-native-sdk.s3.ap-south-1.amazonaws.com/Logomark.png"),
-                                        fit: BoxFit.fill,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const Positioned(
-                                  left: 130,
-                                  top: 13,
-                                  child: SizedBox(
-                                    height: 16,
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.start,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        SizedBox(
-                                          width: 322,
-                                          child: Text(
-                                            'Powered by Reclaim Protocol',
-                                            style: TextStyle(
-                                              color: Colors.black45,
-                                              fontSize: 13,
-                                              fontFamily: 'Manrope',
-                                              fontWeight: FontWeight.w500,
-                                              height: 1.23,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                width: double.infinity,
-                height: 48,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.title,
-                      style: const TextStyle(
-                        color: Colors.black,
-                        fontSize: 20,
-                        fontFamily: 'Manrope',
-                        fontWeight: FontWeight.w700,
-                        height: 1.20,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 16,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          SizedBox(
-                            width: 322,
-                            child: Text(
-                              widget.subTitle,
-                              style: TextStyle(
-                                color: Colors.black
-                                    .withOpacity(0.6000000238418579),
-                                fontSize: 13,
-                                fontFamily: 'Manrope',
-                                fontWeight: FontWeight.w500,
-                                height: 1.23,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              _claimState.isEmpty
-                  ? Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(16),
-                      clipBehavior: Clip.antiAlias,
-                      decoration: const BoxDecoration(),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Material(
-                          color: const Color(0xFF322EED),
-                          child: InkWell(
-                            onTap: () {
-                              _openWebView(
-                                  context,
-                                  widget.requestedProofs[0].loginUrl,
-                                  widget.requestedProofs,
-                                  widget.onSuccess,
-                                  widget.onFail);
-                            },
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Expanded(
-                                  child: SizedBox(
-                                    height: 48,
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
-                                      children: [
-                                        Container(
-                                          width: double.infinity,
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 20),
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.center,
-                                            children: [
-                                              Text(
-                                                widget.cta,
-                                                style: const TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 15,
-                                                  fontFamily: 'Manrope',
-                                                  fontWeight: FontWeight.w700,
-                                                  height: 1.33,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ))
-                  : Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 16),
-                      child: SizedBox(
-                        width: double.infinity,
-                        height: 16,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            SizedBox(
-                              width: 322,
-                              child: Text(
-                                _claimState,
-                                style: TextStyle(
-                                  color: Colors.black
-                                      .withOpacity(0.6000000238418579),
-                                  fontSize: 13,
-                                  fontFamily: 'Manrope',
-                                  fontWeight: FontWeight.w500,
-                                  height: 1.23,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-            ],
-          ),
+          child: buildHeader(context),
         ),
       ],
+    );
+  }
+
+  Widget buildHeader(BuildContext context) {
+    return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.end,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: buildLogoAndTitle(context),
+            ),
+          ],
+        ));
+  }
+
+  Widget buildLogoAndTitle(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        buildLogo(),
+        SizedBox(height: 8),
+        buildTitle(),
+        buildSubtitle(),
+        SizedBox(height: 16),
+        _claimState.isEmpty ? buildClaimButton() : buildClaimState(),
+      ],
+    );
+  }
+
+  Widget buildLogo() {
+    return SizedBox(
+      width: 358,
+      height: 40,
+      child: Stack(
+        children: [
+          Positioned(
+            left: 3.75,
+            top: 6.25,
+            child: Container(
+              width: 30,
+              height: 30,
+              decoration: const BoxDecoration(
+                image: DecorationImage(
+                  image: NetworkImage(
+                      "https://reclaim-react-native-sdk.s3.ap-south-1.amazonaws.com/Logomark.png"),
+                  fit: BoxFit.fill,
+                ),
+              ),
+            ),
+          ),
+          const Positioned(
+            left: 130,
+            top: 13,
+            child: SizedBox(
+              height: 16,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: 322,
+                    child: Text(
+                      'Powered by Reclaim Protocol',
+                      style: TextStyle(
+                        color: Colors.black45,
+                        fontSize: 13,
+                        fontFamily: 'Manrope',
+                        fontWeight: FontWeight.w500,
+                        height: 1.23,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildTitle() {
+    return Text(
+      widget.title,
+      style: const TextStyle(
+        color: Colors.black,
+        fontSize: 20,
+        fontFamily: 'Manrope',
+        fontWeight: FontWeight.w700,
+        height: 1.20,
+      ),
+    );
+  }
+
+  Widget buildSubtitle() {
+    return SizedBox(
+      width: double.infinity,
+      height: 16,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 322,
+            child: Text(
+              widget.subTitle,
+              style: TextStyle(
+                color: Colors.black.withOpacity(0.6000000238418579),
+                fontSize: 13,
+                fontFamily: 'Manrope',
+                fontWeight: FontWeight.w500,
+                height: 1.23,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildClaimButton() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      clipBehavior: Clip.antiAlias,
+      decoration: const BoxDecoration(),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Material(
+          color: const Color(0xFF322EED),
+          child: InkWell(
+            onTap: () {
+              _openWebView(
+                context,
+                widget.requestedProofs[0].loginUrl,
+                widget.requestedProofs,
+                widget.onSuccess,
+                widget.onFail,
+              );
+            },
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: SizedBox(
+                    height: 48,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Text(
+                                widget.cta,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 15,
+                                  fontFamily: 'Manrope',
+                                  fontWeight: FontWeight.w700,
+                                  height: 1.33,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget buildClaimState() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      child: SizedBox(
+        width: double.infinity,
+        height: 16,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: 322,
+              child: Text(
+                _claimState,
+                style: TextStyle(
+                  color: Colors.black.withOpacity(0.6000000238418579),
+                  fontSize: 13,
+                  fontFamily: 'Manrope',
+                  fontWeight: FontWeight.w500,
+                  height: 1.23,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
