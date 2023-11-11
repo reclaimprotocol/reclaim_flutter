@@ -15,10 +15,12 @@ class WebViewScreen extends StatelessWidget {
   final Function(String webViewData) onModification;
   Function(Map<String, dynamic> proofs) onSuccess;
   Function(Exception e) onFail;
+  final bool showShell;
+  BoxDecoration? shellStyles;
   // Create WebViewController
   var controller = WebViewController();
   final cookieManager = WebviewCookieManager();
-  final bool showShell;
+  
   late String cookieStr;
   late dynamic parseResult;
   WebViewScreen({
@@ -30,6 +32,7 @@ class WebViewScreen extends StatelessWidget {
     required this.onSuccess,
     required this.onFail,
     this.showShell = true,
+    this.shellStyles,
   }) : super(key: key) {
     // Configure WebViewController
     cookieManager.clearCookies();
@@ -241,6 +244,7 @@ class ReclaimHttps extends StatefulWidget {
   final Function(Map<String, dynamic> proofs) onSuccess;
   final Function(Exception e) onFail;
   final bool showShell;
+  BoxDecoration? shellStyles;
 
   ReclaimHttps({
     Key? key,
@@ -251,6 +255,7 @@ class ReclaimHttps extends StatefulWidget {
     required this.onSuccess,
     required this.onFail,
     this.showShell = true,
+    this.shellStyles,
   }) : super(key: key);
 
   @override
@@ -285,12 +290,15 @@ class _ReclaimHttpsState extends State<ReclaimHttps> {
 
   @override
   Widget build(BuildContext context) {
+    final containerStyles = widget.shellStyles ?? const BoxDecoration();
+
     return Column(
       children: [
         Container(
           width: MediaQuery.of(context).size.width * 0.9,
           padding: const EdgeInsets.all(16),
           clipBehavior: Clip.none,
+          decoration: containerStyles,
           child: widget.showShell
               ? buildHeader(context)
               : _claimState.isEmpty

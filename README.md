@@ -91,6 +91,10 @@ class MainApp extends StatelessWidget {
                   // do something
                   print('Error: $e');
                 },
+                showShell: true,
+                shellStyles: BoxDecoration(
+                  border: Border.all(color: Colors.red, width: 2.0),
+                ),
               ),
             );
           },
