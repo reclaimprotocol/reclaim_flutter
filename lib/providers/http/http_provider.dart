@@ -315,10 +315,10 @@ class _ReclaimHttpsState extends State<ReclaimHttps> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         buildLogo(),
-        SizedBox(height: 8),
+        const SizedBox(height: 8),
         buildTitle(),
         buildSubtitle(),
-        SizedBox(height: 16),
+        const SizedBox(height: 16),
         _claimState.isEmpty ? buildClaimButton() : buildClaimState(),
       ],
     );
@@ -404,7 +404,7 @@ class _ReclaimHttpsState extends State<ReclaimHttps> {
             child: Text(
               widget.subTitle,
               style: TextStyle(
-                color: Colors.black.withOpacity(0.6000000238418579),
+                color: Colors.black.withOpacity(0.6),
                 fontSize: 13,
                 fontFamily: 'Manrope',
                 fontWeight: FontWeight.w500,
@@ -420,7 +420,6 @@ class _ReclaimHttpsState extends State<ReclaimHttps> {
   Widget buildClaimButton() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
       clipBehavior: Clip.antiAlias,
       decoration: const BoxDecoration(),
       child: ClipRRect(
@@ -499,7 +498,7 @@ class _ReclaimHttpsState extends State<ReclaimHttps> {
               child: Text(
                 _claimState,
                 style: TextStyle(
-                  color: Colors.black.withOpacity(0.6000000238418579),
+                  color: Colors.black.withOpacity(0.6),
                   fontSize: 13,
                   fontFamily: 'Manrope',
                   fontWeight: FontWeight.w500,
