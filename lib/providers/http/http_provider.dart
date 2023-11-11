@@ -18,17 +18,19 @@ class WebViewScreen extends StatelessWidget {
   // Create WebViewController
   var controller = WebViewController();
   final cookieManager = WebviewCookieManager();
+  final bool showShell;
   late String cookieStr;
   late dynamic parseResult;
-  WebViewScreen(
-      {Key? key,
-      required this.context,
-      required this.url,
-      required this.requestedProofs,
-      required this.onModification,
-      required this.onSuccess,
-      required this.onFail})
-      : super(key: key) {
+  WebViewScreen({
+    Key? key,
+    required this.context,
+    required this.url,
+    required this.requestedProofs,
+    required this.onModification,
+    required this.onSuccess,
+    required this.onFail,
+    this.showShell = true,
+  }) : super(key: key) {
     // Configure WebViewController
     cookieManager.clearCookies();
     controller
@@ -238,6 +240,7 @@ class ReclaimHttps extends StatefulWidget {
   String cta;
   final Function(Map<String, dynamic> proofs) onSuccess;
   final Function(Exception e) onFail;
+  final bool showShell;
 
   ReclaimHttps({
     Key? key,
@@ -247,6 +250,7 @@ class ReclaimHttps extends StatefulWidget {
     required this.cta,
     required this.onSuccess,
     required this.onFail,
+    this.showShell = true,
   }) : super(key: key);
 
   @override
@@ -285,27 +289,32 @@ class _ReclaimHttpsState extends State<ReclaimHttps> {
       children: [
         Container(
           width: MediaQuery.of(context).size.width * 0.9,
+          padding: const EdgeInsets.all(16),
           clipBehavior: Clip.none,
-          child: buildHeader(context),
+          child: widget.showShell
+              ? buildHeader(context)
+              : _claimState.isEmpty
+                  ? buildClaimButton()
+                  : buildClaimState(),
         ),
       ],
     );
   }
 
   Widget buildHeader(BuildContext context) {
-    return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.end,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: buildLogoAndTitle(context),
-            ),
-          ],
-        ));
+    return SizedBox(
+      width: double.infinity,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.end,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: buildLogoAndTitle(context),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget buildLogoAndTitle(BuildContext context) {
