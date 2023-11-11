@@ -20,7 +20,7 @@ class WebViewScreen extends StatelessWidget {
   // Create WebViewController
   var controller = WebViewController();
   final cookieManager = WebviewCookieManager();
-  
+
   late String cookieStr;
   late dynamic parseResult;
   WebViewScreen({
@@ -259,11 +259,16 @@ class ReclaimHttps extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _ReclaimHttpsState createState() => _ReclaimHttpsState();
+  ReclaimHttpsState createState() => ReclaimHttpsState();
 }
 
-class _ReclaimHttpsState extends State<ReclaimHttps> {
+class ReclaimHttpsState extends State<ReclaimHttps> {
   String _claimState = "";
+
+  void triggerOpenWebView() {
+    _openWebView(context, widget.requestedProofs[0].loginUrl,
+        widget.requestedProofs, widget.onSuccess, widget.onFail);
+  }
 
   void _openWebView(
       BuildContext context,
