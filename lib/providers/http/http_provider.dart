@@ -9,20 +9,23 @@ import 'package:fluttertoast/fluttertoast.dart';
 
 // ignore: must_be_immutable
 class WebViewScreen extends StatelessWidget {
-  BuildContext context;
-  Uri url;
-  List<RequestedProof> requestedProofs;
+  final BuildContext context;
+  final Uri url;
+  final List<RequestedProof> requestedProofs;
   final Function(String webViewData) onModification;
-  Function(Map<String, dynamic> proofs) onSuccess;
-  Function(Exception e) onFail;
+  final Function(String status) onStatusChange;
+  final Function(Map<String, dynamic> proofs) onSuccess;
+  final Function(Exception e) onFail;
   final bool showShell;
-  BoxDecoration? shellStyles;
-  // Create WebViewController
+  final BoxDecoration? shellStyles;
+
+  static void _defaultOnStatusChange(String input) {}
+
   var controller = WebViewController();
   final cookieManager = WebviewCookieManager();
-
   late String cookieStr;
   late dynamic parseResult;
+
   WebViewScreen({
     Key? key,
     required this.context,
@@ -31,6 +34,7 @@ class WebViewScreen extends StatelessWidget {
     required this.onModification,
     required this.onSuccess,
     required this.onFail,
+    this.onStatusChange = _defaultOnStatusChange,
     this.showShell = true,
     this.shellStyles,
   }) : super(key: key) {
@@ -241,10 +245,13 @@ class ReclaimHttps extends StatefulWidget {
   final String title;
   final String subTitle;
   String cta;
+  final Function(String status) onStatusChange;
   final Function(Map<String, dynamic> proofs) onSuccess;
   final Function(Exception e) onFail;
   final bool showShell;
   BoxDecoration? shellStyles;
+
+  static void _defaultOnStatusChange(String input) {}
 
   ReclaimHttps({
     Key? key,
@@ -254,6 +261,7 @@ class ReclaimHttps extends StatefulWidget {
     required this.cta,
     required this.onSuccess,
     required this.onFail,
+    this.onStatusChange = _defaultOnStatusChange,
     this.showShell = true,
     this.shellStyles,
   }) : super(key: key);
@@ -265,15 +273,23 @@ class ReclaimHttps extends StatefulWidget {
 class ReclaimHttpsState extends State<ReclaimHttps> {
   String _claimState = "";
 
+  String get claimState => _claimState;
+
   void triggerOpenWebView() {
-    _openWebView(context, widget.requestedProofs[0].loginUrl,
-        widget.requestedProofs, widget.onSuccess, widget.onFail);
+    _openWebView(
+        context,
+        widget.requestedProofs[0].loginUrl,
+        widget.requestedProofs,
+        widget.onStatusChange,
+        widget.onSuccess,
+        widget.onFail);
   }
 
   void _openWebView(
       BuildContext context,
       String url,
       List<RequestedProof> requestedProofs,
+      Function(String status) onStatusChange,
       Function(Map<String, dynamic> proofs) onSuccess,
       Function(Exception e) onFail) {
     Navigator.of(context).push(
@@ -285,6 +301,7 @@ class ReclaimHttpsState extends State<ReclaimHttps> {
             onModification: (webViewData) {
               setState(() {
                 _claimState = webViewData;
+                onStatusChange(webViewData);
               });
             },
             onSuccess: onSuccess,
@@ -454,6 +471,7 @@ class ReclaimHttpsState extends State<ReclaimHttps> {
                 context,
                 widget.requestedProofs[0].loginUrl,
                 widget.requestedProofs,
+                widget.onStatusChange,
                 widget.onSuccess,
                 widget.onFail,
               );
