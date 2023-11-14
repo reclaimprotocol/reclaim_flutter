@@ -317,16 +317,13 @@ class ReclaimHttpsState extends State<ReclaimHttps> {
     return Column(
       children: [
         Container(
-          width: MediaQuery.of(context).size.width * 0.9,
-          padding: const EdgeInsets.all(16),
-          clipBehavior: Clip.none,
-          decoration: containerStyles,
-          child: widget.showShell
-              ? buildHeader(context)
-              : _claimState.isEmpty
-                  ? buildClaimButton()
-                  : buildClaimState(),
-        ),
+            width:
+                widget.showShell ? MediaQuery.of(context).size.width * 0.9 : 0,
+            padding:
+                widget.showShell ? const EdgeInsets.all(16) : EdgeInsets.zero,
+            clipBehavior: Clip.none,
+            decoration: containerStyles,
+            child: widget.showShell ? buildHeader(context) : const SizedBox()),
       ],
     );
   }
