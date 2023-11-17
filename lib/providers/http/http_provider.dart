@@ -6,18 +6,18 @@ import 'dart:math';
 import 'package:web3dart/web3dart.dart';
 import 'dart:convert';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'dart:async';
 
 // ignore: must_be_immutable
 class WebViewScreen extends StatelessWidget {
   final BuildContext context;
   final Uri url;
   final List<RequestedProof> requestedProofs;
-  final Function(String webViewData) onModification;
+  final Function(String webViewData, String cookieStr, dynamic parseResult)
+      onModification;
   final Function(String status) onStatusChange;
   final Function(Map<String, dynamic> proofs) onSuccess;
   final Function(Exception e) onFail;
-  final bool showShell;
-  final BoxDecoration? shellStyles;
 
   static void _defaultOnStatusChange(String input) {}
 
@@ -35,8 +35,6 @@ class WebViewScreen extends StatelessWidget {
     required this.onSuccess,
     required this.onFail,
     this.onStatusChange = _defaultOnStatusChange,
-    this.showShell = true,
-    this.shellStyles,
   }) : super(key: key) {
     // Configure WebViewController
     cookieManager.clearCookies();
@@ -46,54 +44,13 @@ class WebViewScreen extends StatelessWidget {
         onMessageReceived: (JavaScriptMessage message) {
           parseResult = parseHtml(message.message,
               requestedProofs[0].responseSelections[0].responseMatch);
+          print('parseResult: $parseResult');
           controller.runJavaScript('''Claim.postMessage("Init")''');
-        },
-      )
-      ..addJavaScriptChannel(
-        'Check',
-        onMessageReceived: (JavaScriptMessage message) {
-          var response = jsonDecode(message.message);
-          if (response["type"] == "createClaimStep") {
-            if (response["step"]["name"] == "creating") {
-              Fluttertoast.showToast(
-                  msg: "Creating Claim",
-                  toastLength: Toast.LENGTH_LONG,
-                  gravity: ToastGravity.CENTER,
-                  timeInSecForIosWeb: 2,
-                  textColor: Colors.white,
-                  fontSize: 16.0,
-                  backgroundColor: const Color.fromARGB(255, 86, 86, 86));
-              onModification('Creating Claim');
-            }
-            if (response["step"]["name"] == "witness-done") {
-              Fluttertoast.showToast(
-                  msg: "Claim Created Successfully",
-                  toastLength: Toast.LENGTH_LONG,
-                  gravity: ToastGravity.CENTER,
-                  timeInSecForIosWeb: 2,
-                  textColor: Colors.white,
-                  fontSize: 16.0,
-                  backgroundColor: const Color.fromARGB(255, 86, 86, 86));
-              onModification('Claim Created Successfully');
-            }
-          }
-          if (response["type"] == "createClaimDone") {
-            Navigator.pop(context);
-            onSuccess(response["response"]);
-          }
-
-          if (response["type"] == "error") {
-            onModification('Claim Creation Failed');
-            Navigator.pop(context);
-            onFail(Exception("${response["data"]["message"]}"));
-          }
         },
       )
       ..addJavaScriptChannel(
         'Claim',
         onMessageReceived: (JavaScriptMessage message) async {
-          controller
-              .loadRequest(Uri.parse("https://sdk-rpc.reclaimprotocol.org/"));
           Fluttertoast.showToast(
               msg: "Initiating Claim Creation",
               toastLength: Toast.LENGTH_LONG,
@@ -102,7 +59,9 @@ class WebViewScreen extends StatelessWidget {
               textColor: Colors.white,
               fontSize: 16.0,
               backgroundColor: const Color.fromARGB(255, 86, 86, 86));
-          onModification('Please wait, Initiating Claim Creation');
+          onModification(
+              'Please wait, Initiating Claim Creation', cookieStr, parseResult);
+          Navigator.pop(context);
         },
       )
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
@@ -112,42 +71,6 @@ class WebViewScreen extends StatelessWidget {
             //  print("Loading ${progress}%");
           },
           onPageFinished: (String url) async {
-            if (url == "https://sdk-rpc.reclaimprotocol.org/") {
-              var random = Random.secure();
-              EthPrivateKey priKey = EthPrivateKey.createRandom(random);
-              String privateKey =
-                  bytesToHex(priKey.privateKey, include0x: true);
-              var diff = privateKey.length - 66;
-              if (diff > 0) {
-                privateKey = '0x${privateKey.substring(2 + diff)}';
-              }
-
-              Map<String, dynamic> req = {
-                "channel": "Check",
-                "module": "witness-sdk",
-                "id": "123",
-                "type": "createClaim",
-                "request": {
-                  "name": "http",
-                  "params": {
-                    "url": requestedProofs[0].url,
-                    "method": "GET",
-                    "responseSelections": [
-                      {
-                        "responseMatch": parseResult["result"],
-                      }
-                    ]
-                  },
-                  "secretParams": {
-                    "cookieStr": cookieStr,
-                  },
-                  "ownerPrivateKey": privateKey,
-                }
-              };
-
-              controller.runJavaScript('''postMessage(${jsonEncode(req)})''');
-              return;
-            }
             final gotCookies =
                 await cookieManager.getCookies(requestedProofs[0].loginUrl);
             List<String> foundCookies = [];
@@ -162,6 +85,7 @@ class WebViewScreen extends StatelessWidget {
             if (found) {
               cookieStr =
                   gotCookies.map((c) => '${c.name}=${c.value}').join('; ');
+              print('cookieStr: $cookieStr');
               if (requestedProofs[0].url.replaceAll(RegExp(r'/$'), '') ==
                   url.replaceAll(RegExp(r'/$'), '')) {
                 controller.runJavaScript(
@@ -209,6 +133,154 @@ class WebViewScreen extends StatelessWidget {
     }
 
     return {'result': result, 'params': params};
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(),
+      body: WebViewWidget(controller: controller),
+    );
+  }
+}
+
+class HiddenWebViewScreen extends StatefulWidget {
+  final BuildContext context;
+  final List<RequestedProof> requestedProofs;
+  final Function(String webViewData) onModification;
+  final Function(String status) onStatusChange;
+  final Function(Map<String, dynamic> proofs) onSuccess;
+  final Function(Exception e) onFail;
+  final String cookieStr;
+  final dynamic parseResult;
+
+  static void _defaultOnStatusChange(String input) {}
+
+  const HiddenWebViewScreen({
+    Key? key,
+    required this.context,
+    required this.requestedProofs,
+    required this.onModification,
+    required this.onSuccess,
+    required this.onFail,
+    this.onStatusChange = _defaultOnStatusChange,
+    required this.cookieStr,
+    required this.parseResult,
+  }) : super(key: key);
+
+  @override
+  _HiddenWebViewScreenState createState() => _HiddenWebViewScreenState();
+}
+
+class _HiddenWebViewScreenState extends State<HiddenWebViewScreen> {
+  var controller = WebViewController();
+  final cookieManager = WebviewCookieManager();
+
+  bool isPageLoaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    controller
+      ..addJavaScriptChannel(
+        'Login',
+        onMessageReceived: (JavaScriptMessage message) {
+          print('got a message in Login channel');
+          controller.runJavaScript('''Claim.postMessage("Init")''');
+        },
+      )
+      ..addJavaScriptChannel(
+        'Check',
+        onMessageReceived: (JavaScriptMessage message) {
+          var response = jsonDecode(message.message);
+          print('Web in sdk got a response');
+          print('response is: $response');
+          if (response["type"] == "createClaimStep") {
+            if (response["step"]["name"] == "creating") {
+              print('Creating a claim');
+              Fluttertoast.showToast(
+                  msg: "Creating Claim",
+                  toastLength: Toast.LENGTH_LONG,
+                  gravity: ToastGravity.CENTER,
+                  timeInSecForIosWeb: 2,
+                  textColor: Colors.white,
+                  fontSize: 16.0,
+                  backgroundColor: const Color.fromARGB(255, 86, 86, 86));
+              widget.onModification('Creating Claim');
+            }
+            if (response["step"]["name"] == "witness-done") {
+              print('Claim Created succ');
+              Fluttertoast.showToast(
+                  msg: "Claim Created Successfully",
+                  toastLength: Toast.LENGTH_LONG,
+                  gravity: ToastGravity.CENTER,
+                  timeInSecForIosWeb: 2,
+                  textColor: Colors.white,
+                  fontSize: 16.0,
+                  backgroundColor: const Color.fromARGB(255, 86, 86, 86));
+              widget.onModification('Claim Created Successfully');
+            }
+          }
+          if (response["type"] == "createClaimDone") {
+            print('done');
+            Navigator.pop(context);
+            widget.onSuccess(response["response"]);
+          }
+
+          if (response["type"] == "error") {
+            widget.onModification('Claim Creation Failed');
+            Navigator.pop(context);
+            widget.onFail(Exception("${response["data"]["message"]}"));
+          }
+        },
+      )
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setNavigationDelegate(
+        NavigationDelegate(onProgress: (int progress) {
+          //  print("Loading ${progress}%");
+        }, onPageFinished: (String url) async {
+          print('on page finished, url is: $url');
+          if (!isPageLoaded && url == "https://sdk-rpc.reclaimprotocol.org/") {
+            isPageLoaded = true;
+            print('in child webView I got the sdk link');
+            var random = Random.secure();
+            EthPrivateKey priKey = EthPrivateKey.createRandom(random);
+            String privateKey = bytesToHex(priKey.privateKey, include0x: true);
+            var diff = privateKey.length - 66;
+            if (diff > 0) {
+              privateKey = '0x${privateKey.substring(2 + diff)}';
+            }
+
+            Map<String, dynamic> req = {
+              "channel": "Check",
+              "module": "witness-sdk",
+              "id": "123",
+              "type": "createClaim",
+              "request": {
+                "name": "http",
+                "params": {
+                  "url": widget.requestedProofs[0].url,
+                  "method": "GET",
+                  "responseSelections": [
+                    {
+                      "responseMatch": widget.parseResult["result"],
+                    }
+                  ]
+                },
+                "secretParams": {
+                  "cookieStr": widget.cookieStr,
+                },
+                "ownerPrivateKey": privateKey,
+              }
+            };
+            print('Posting a req');
+
+            controller.runJavaScript('''postMessage(${jsonEncode(req)})''');
+            return;
+          }
+        }),
+      )
+      ..loadRequest(Uri.parse("https://sdk-rpc.reclaimprotocol.org/"));
   }
 
   @override
@@ -272,6 +344,9 @@ class ReclaimHttps extends StatefulWidget {
 
 class ReclaimHttpsState extends State<ReclaimHttps> {
   String _claimState = "";
+  String cookieStr = "";
+  dynamic parseResult;
+  bool extracted = false;
 
   String get claimState => _claimState;
 
@@ -296,11 +371,16 @@ class ReclaimHttpsState extends State<ReclaimHttps> {
       MaterialPageRoute(
         builder: (_) => WebViewScreen(
             context: context,
-            url: Uri.parse(url),
+            url: Uri.parse(widget.requestedProofs[0].url),
             requestedProofs: requestedProofs,
-            onModification: (webViewData) {
+            onModification: (webViewData, cookieStr, parseResult) {
               setState(() {
                 _claimState = webViewData;
+                print('on modi cookieStr is: $cookieStr');
+                this.cookieStr = cookieStr;
+                this.parseResult = parseResult;
+                print('on modi parsResult is: $parseResult');
+                extracted = true;
                 onStatusChange(webViewData);
               });
             },
@@ -323,9 +403,38 @@ class ReclaimHttpsState extends State<ReclaimHttps> {
                 widget.showShell ? const EdgeInsets.all(16) : EdgeInsets.zero,
             clipBehavior: Clip.none,
             decoration: containerStyles,
-            child: widget.showShell ? buildHeader(context) : const SizedBox()),
+            child: widget.showShell
+                ? buildHeader(context)
+                : extracted
+                    ? buildwebView(context)
+                    : const SizedBox()),
       ],
     );
+  }
+
+  Widget buildwebView(BuildContext context) {
+    return SizedBox(
+        width: 0,
+        height: 0,
+        child: HiddenWebViewScreen(
+            context: context,
+            requestedProofs: widget.requestedProofs,
+            onModification: (webViewData) {
+              setState(() {
+                _claimState = webViewData;
+                widget.onStatusChange(webViewData);
+                if (webViewData == 'Claim Created Successfully' ||
+                    webViewData == 'Claim Creation Failed') {
+                  print('we got a set state call');
+                  print('webViewData is: $webViewData');
+                  extracted = false;
+                }
+              });
+            },
+            onSuccess: widget.onSuccess,
+            onFail: widget.onFail,
+            parseResult: parseResult,
+            cookieStr: cookieStr));
   }
 
   Widget buildHeader(BuildContext context) {
@@ -350,6 +459,7 @@ class ReclaimHttpsState extends State<ReclaimHttps> {
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        extracted ? buildwebView(context) : const SizedBox(),
         buildLogo(),
         const SizedBox(height: 8),
         buildTitle(),
