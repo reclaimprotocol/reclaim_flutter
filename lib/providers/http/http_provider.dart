@@ -44,7 +44,6 @@ class WebViewScreen extends StatelessWidget {
         onMessageReceived: (JavaScriptMessage message) {
           parseResult = parseHtml(message.message,
               requestedProofs[0].responseSelections[0].responseMatch);
-          print('parseResult: $parseResult');
           controller.runJavaScript('''Claim.postMessage("Init")''');
         },
       )
@@ -85,7 +84,6 @@ class WebViewScreen extends StatelessWidget {
             if (found) {
               cookieStr =
                   gotCookies.map((c) => '${c.name}=${c.value}').join('; ');
-              print('cookieStr: $cookieStr');
               if (requestedProofs[0].url.replaceAll(RegExp(r'/$'), '') ==
                   url.replaceAll(RegExp(r'/$'), '')) {
                 controller.runJavaScript(
@@ -185,7 +183,6 @@ class _HiddenWebViewScreenState extends State<HiddenWebViewScreen> {
       ..addJavaScriptChannel(
         'Login',
         onMessageReceived: (JavaScriptMessage message) {
-          print('got a message in Login channel');
           controller.runJavaScript('''Claim.postMessage("Init")''');
         },
       )
@@ -193,11 +190,8 @@ class _HiddenWebViewScreenState extends State<HiddenWebViewScreen> {
         'Check',
         onMessageReceived: (JavaScriptMessage message) {
           var response = jsonDecode(message.message);
-          print('Web in sdk got a response');
-          print('response is: $response');
           if (response["type"] == "createClaimStep") {
             if (response["step"]["name"] == "creating") {
-              print('Creating a claim');
               Fluttertoast.showToast(
                   msg: "Creating Claim",
                   toastLength: Toast.LENGTH_LONG,
@@ -209,7 +203,6 @@ class _HiddenWebViewScreenState extends State<HiddenWebViewScreen> {
               widget.onModification('Creating Claim');
             }
             if (response["step"]["name"] == "witness-done") {
-              print('Claim Created succ');
               Fluttertoast.showToast(
                   msg: "Claim Created Successfully",
                   toastLength: Toast.LENGTH_LONG,
@@ -222,7 +215,6 @@ class _HiddenWebViewScreenState extends State<HiddenWebViewScreen> {
             }
           }
           if (response["type"] == "createClaimDone") {
-            print('done');
             widget.onSuccess(response["response"]);
           }
 
@@ -237,10 +229,8 @@ class _HiddenWebViewScreenState extends State<HiddenWebViewScreen> {
         NavigationDelegate(onProgress: (int progress) {
           //  print("Loading ${progress}%");
         }, onPageFinished: (String url) async {
-          print('on page finished, url is: $url');
           if (!isPageLoaded && url == "https://sdk-rpc.reclaimprotocol.org/") {
             isPageLoaded = true;
-            print('in child webView I got the sdk link');
             var random = Random.secure();
             EthPrivateKey priKey = EthPrivateKey.createRandom(random);
             String privateKey = bytesToHex(priKey.privateKey, include0x: true);
@@ -271,7 +261,6 @@ class _HiddenWebViewScreenState extends State<HiddenWebViewScreen> {
                 "ownerPrivateKey": privateKey,
               }
             };
-            print('Posting a req');
 
             controller.runJavaScript('''postMessage(${jsonEncode(req)})''');
             return;
@@ -374,10 +363,8 @@ class ReclaimHttpsState extends State<ReclaimHttps> {
             onModification: (webViewData, cookieStr, parseResult) {
               setState(() {
                 _claimState = webViewData;
-                print('on modi cookieStr is: $cookieStr');
                 this.cookieStr = cookieStr;
                 this.parseResult = parseResult;
-                print('on modi parsResult is: $parseResult');
                 extracted = true;
                 onStatusChange(webViewData);
               });
@@ -423,8 +410,6 @@ class ReclaimHttpsState extends State<ReclaimHttps> {
                 widget.onStatusChange(webViewData);
                 if (webViewData == 'Claim Created Successfully' ||
                     webViewData == 'Claim Creation Failed') {
-                  print('we got a set state call');
-                  print('webViewData is: $webViewData');
                   extracted = false;
                 }
               });
