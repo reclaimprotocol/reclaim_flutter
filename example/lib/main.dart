@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:reclaim_flutter/reclaim_flutter.dart';
 
-
 void main() {
   runApp(const MainApp());
 }
 
 // Init a GlobalKey and pass it to ReclaimZomatoEqual widget
-final zomatoEqualKey = GlobalKey<ReclaimZomatoEqualState>();
+final httpEqualKey = GlobalKey<ReclaimHttpsState>();
 
 class MainApp extends StatelessWidget {
   const MainApp({super.key});
@@ -22,38 +21,45 @@ class MainApp extends StatelessWidget {
             return Center(
               child: Column(
                 children: [
-                  ReclaimZomatoEqual(
-                    key: zomatoEqualKey,
+                  ReclaimHttps(
+                    key: httpEqualKey,
                     requestedProofs: [
-                      ZomatoEqualRequestedProof(
-                        url: 'https://www.zomato.com/webroutes/user/orders?page=1',
-                        loginUrl: 'https://www.zomato.com',
-                        loginCookies: ['cid', 'zat'],
+                      RequestedProof(
+                        url: 'https://bookface.ycombinator.com/home',
+                        loginUrl: 'https://bookface.ycombinator.com/home',
+                        loginCookies: ['_sso.key'],
+                        responseSelections: [
+                          ResponseSelection(
+                            responseMatch:
+                                '{&quot;id&quot;:{{YC_USER_ID}},.*?waas_admin.*?:{.*?}.*?:\\{.*?}.*?(?:full_name|first_name).*?}',
+                          ),
+                        ],
                       ),
                     ],
-                    title: "Zomato",
-                    subTitle: "Prove that you are a Zomato user",
+                    title: "YC Login",
+                    subTitle: "Prove you have a YC Login",
                     cta: "Prove",
-                    onClaimStateChange: (claimState) {
-                      // claimState can be 'initiating', 'creating', 'done'
-                      // Hide ReclaimZomatoEqual Widget on claimState === 'initiating' and show fetching animation
-                      print(claimState);
-                    },
-                    onSuccess: (proofs) async{
-                      // proofs contains a list of proof
+                    onStatusChange: (status) =>
+                        print('Status changed to : $status'),
+                    onSuccess: (proofs) {
+                      // do something
                       print('proofs: $proofs');
-                      // Show a success modal or bottom sheet
                     },
                     onFail: (Exception e) {
+                      // do something
                       print('Error: $e');
                     },
+                    showShell: true,
+                    shellStyles: BoxDecoration(
+                      border: Border.all(color: Colors.red, width: 2.0),
+                    ),
                   ),
-                    SizedBox(height: 20),
-                    ElevatedButton(
-                    child: Text('Custom Trigger'),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    child: const Text('Custom Trigger'),
                     onPressed: () {
-											//The trigger can be called from anywhere
-                      zomatoEqualKey.currentState?.triggerOpenWebView();
+                      //The trigger can be called from anywhere
+                      httpEqualKey.currentState?.triggerOpenWebView();
                     },
                   ),
                 ],

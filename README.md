@@ -83,6 +83,8 @@ class MainApp extends StatelessWidget {
                 title: "YC Login",
                 subTitle: "Prove you have a YC Login",
                 cta: "Prove",
+                onStatusChange: (status) =>
+                  print('Status changed to : $status'),
                 onSuccess: (proofs) {
                   // do something
                   print('proofs: $proofs');
@@ -91,6 +93,10 @@ class MainApp extends StatelessWidget {
                   // do something
                   print('Error: $e');
                 },
+                showShell: true,
+                shellStyles: BoxDecoration(
+                  border: Border.all(color: Colors.red, width: 2.0),
+                ),
               ),
             );
           },
