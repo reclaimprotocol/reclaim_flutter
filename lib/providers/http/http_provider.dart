@@ -223,13 +223,11 @@ class _HiddenWebViewScreenState extends State<HiddenWebViewScreen> {
           }
           if (response["type"] == "createClaimDone") {
             print('done');
-            Navigator.pop(context);
             widget.onSuccess(response["response"]);
           }
 
           if (response["type"] == "error") {
             widget.onModification('Claim Creation Failed');
-            Navigator.pop(context);
             widget.onFail(Exception("${response["data"]["message"]}"));
           }
         },
