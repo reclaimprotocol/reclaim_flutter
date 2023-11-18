@@ -5,7 +5,7 @@ void main() {
   runApp(const MainApp());
 }
 
-// Init a GlobalKey and pass it to ReclaimZomatoEqual widget
+// Init a GlobalKey and pass it to ReclaimHttps widget
 final httpEqualKey = GlobalKey<ReclaimHttpsState>();
 
 class MainApp extends StatelessWidget {
