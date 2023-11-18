@@ -18,6 +18,7 @@ dependencies:
   fluttertoast: ^8.1.1
   http: any
   web3dart: ^2.7.1
+  flutter_spinkit: ^5.2.0
 
 dev_dependencies:
   flutter_test:

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:reclaim_flutter/providers/http/hidden_web_view.dart';
 import 'package:reclaim_flutter/providers/http/web_view_screen.dart';
 import 'package:reclaim_flutter/providers/http/types.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 
 // ignore: must_be_immutable
 class ReclaimHttps extends StatefulWidget {
@@ -295,7 +296,7 @@ class ReclaimHttpsState extends State<ReclaimHttps> {
                               Text(
                                 widget.cta,
                                 style: const TextStyle(
-                                  color: Colors.white,
+                                  color: Color.fromARGB(255, 0, 0, 0),
                                   fontSize: 15,
                                   fontFamily: 'Manrope',
                                   fontWeight: FontWeight.w700,
@@ -318,31 +319,39 @@ class ReclaimHttpsState extends State<ReclaimHttps> {
   }
 
   Widget buildClaimState() {
+    bool shouldShowSpinner =
+        _claimState == 'Please wait, Initiating Claim Creation' ||
+            _claimState == 'Creating Claim';
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      child: SizedBox(
-        width: double.infinity,
-        height: 16,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(
-              width: 322,
-              child: Text(
-                _claimState,
-                style: TextStyle(
-                  color: Colors.black.withOpacity(0.6),
-                  fontSize: 13,
-                  fontFamily: 'Manrope',
-                  fontWeight: FontWeight.w500,
-                  height: 1.23,
-                ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (shouldShowSpinner)
+            const SpinKitFadingCircle(
+              color: Color.fromARGB(255, 0, 0, 0),
+              size: 15,
+            ),
+          if (shouldShowSpinner)
+            const SizedBox(
+              width: 8,
+            ),
+          Flexible(
+            child: Text(
+              _claimState,
+              style: TextStyle(
+                color: Colors.black.withOpacity(0.6),
+                fontSize: 13,
+                fontFamily: 'Manrope',
+                fontWeight: FontWeight.w500,
+                height: 1.23,
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
