@@ -56,6 +56,9 @@ void main() {
   runApp(const MainApp());
 }
 
+// Init a GlobalKey and pass it to ReclaimHttps widget
+final httpEqualKey = GlobalKey<ReclaimHttpsState>();
+
 class MainApp extends StatelessWidget {
   const MainApp({super.key});
 
@@ -68,6 +71,7 @@ class MainApp extends StatelessWidget {
           itemBuilder: (BuildContext context, int index) {
             return Center(
               child: ReclaimHttps(
+                key: httpEqualKey,
                 requestedProofs: [
                   RequestedProof(
                     url: 'https://bookface.ycombinator.com/home',
@@ -75,7 +79,7 @@ class MainApp extends StatelessWidget {
                     loginCookies: ['_sso.key'],
                     responseSelections: [
                       ResponseSelection(
-                        responseMatch: '\{\"id\":{{YC_USER_ID}},.*?waas_admin.*?:{.*?}.*?:\\{.*?}.*?(?:full_name|first_name).*?}',
+                        responseMatch: '{&quot;id&quot;:{{YC_USER_ID}},.*?waas_admin.*?:{.*?}.*?:\\{.*?}.*?(?:full_name|first_name).*?}',
                       ),
                     ],
                   ),
@@ -105,6 +109,11 @@ class MainApp extends StatelessWidget {
     );
   }
 }
+```
+In order to trigger the claim creation without showing the shell, run the following:
+
+```
+httpEqualKey.currentState?.triggerOpenWebView();
 ```
 
 For using Swiggy, following is the example implementation:
