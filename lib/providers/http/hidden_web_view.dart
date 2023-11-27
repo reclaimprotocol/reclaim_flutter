@@ -6,7 +6,6 @@ import 'package:web3dart/crypto.dart';
 import 'dart:math';
 import 'package:web3dart/web3dart.dart';
 import 'dart:convert';
-import 'package:fluttertoast/fluttertoast.dart';
 
 class HiddenWebViewScreen extends StatefulWidget {
   final BuildContext context;

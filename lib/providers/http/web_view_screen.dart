@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:reclaim_flutter/providers/http/types.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_cookie_manager/webview_cookie_manager.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 
 // ignore: must_be_immutable
 class WebViewScreen extends StatelessWidget {
@@ -34,6 +33,7 @@ class WebViewScreen extends StatelessWidget {
   }) : super(key: key) {
     // Configure WebViewController
     cookieManager.clearCookies();
+    controller.reload();
     controller
       ..addJavaScriptChannel(
         'Login',
