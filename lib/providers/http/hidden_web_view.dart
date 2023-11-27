@@ -6,7 +6,6 @@ import 'package:web3dart/crypto.dart';
 import 'dart:math';
 import 'package:web3dart/web3dart.dart';
 import 'dart:convert';
-import 'package:fluttertoast/fluttertoast.dart';
 
 class HiddenWebViewScreen extends StatefulWidget {
   final BuildContext context;
@@ -58,25 +57,9 @@ class _HiddenWebViewScreenState extends State<HiddenWebViewScreen> {
           var response = jsonDecode(message.message);
           if (response["type"] == "createClaimStep") {
             if (response["step"]["name"] == "creating") {
-              Fluttertoast.showToast(
-                  msg: "Creating Claim",
-                  toastLength: Toast.LENGTH_LONG,
-                  gravity: ToastGravity.CENTER,
-                  timeInSecForIosWeb: 2,
-                  textColor: Colors.white,
-                  fontSize: 16.0,
-                  backgroundColor: const Color.fromARGB(255, 86, 86, 86));
               widget.onModification('Creating Claim');
             }
             if (response["step"]["name"] == "witness-done") {
-              Fluttertoast.showToast(
-                  msg: "Claim Created Successfully",
-                  toastLength: Toast.LENGTH_LONG,
-                  gravity: ToastGravity.CENTER,
-                  timeInSecForIosWeb: 2,
-                  textColor: Colors.white,
-                  fontSize: 16.0,
-                  backgroundColor: const Color.fromARGB(255, 86, 86, 86));
               widget.onModification('Claim Created Successfully');
             }
           }

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:reclaim_flutter/providers/http/types.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_cookie_manager/webview_cookie_manager.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 
 // ignore: must_be_immutable
 class WebViewScreen extends StatelessWidget {
@@ -34,6 +33,7 @@ class WebViewScreen extends StatelessWidget {
   }) : super(key: key) {
     // Configure WebViewController
     cookieManager.clearCookies();
+    controller.reload();
     controller
       ..addJavaScriptChannel(
         'Login',
@@ -46,14 +46,6 @@ class WebViewScreen extends StatelessWidget {
       ..addJavaScriptChannel(
         'Claim',
         onMessageReceived: (JavaScriptMessage message) async {
-          Fluttertoast.showToast(
-              msg: "Initiating Claim Creation",
-              toastLength: Toast.LENGTH_LONG,
-              gravity: ToastGravity.CENTER,
-              timeInSecForIosWeb: 2,
-              textColor: Colors.white,
-              fontSize: 16.0,
-              backgroundColor: const Color.fromARGB(255, 86, 86, 86));
           onModification(
               'Please wait, Initiating Claim Creation', cookieStr, parseResult);
           Navigator.pop(context);
