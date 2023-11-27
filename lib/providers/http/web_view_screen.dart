@@ -46,14 +46,6 @@ class WebViewScreen extends StatelessWidget {
       ..addJavaScriptChannel(
         'Claim',
         onMessageReceived: (JavaScriptMessage message) async {
-          Fluttertoast.showToast(
-              msg: "Initiating Claim Creation",
-              toastLength: Toast.LENGTH_LONG,
-              gravity: ToastGravity.CENTER,
-              timeInSecForIosWeb: 2,
-              textColor: Colors.white,
-              fontSize: 16.0,
-              backgroundColor: const Color.fromARGB(255, 86, 86, 86));
           onModification(
               'Please wait, Initiating Claim Creation', cookieStr, parseResult);
           Navigator.pop(context);
