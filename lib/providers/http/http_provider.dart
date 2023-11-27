@@ -325,60 +325,43 @@ class ReclaimHttpsState extends State<ReclaimHttps> {
 
     return Container(
       width: double.infinity,
+      height: 48,
       clipBehavior: Clip.antiAlias,
       decoration: const BoxDecoration(),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12),
         child: Material(
           color: const Color(0xFF322EED).withOpacity(0.6),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: SizedBox(
-                  height: 48,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            if (shouldShowSpinner)
-                              const SpinKitFadingCircle(
-                                color: Color.fromARGB(255, 255, 255, 255),
-                                size: 15,
-                              ),
-                            if (shouldShowSpinner)
-                              const SizedBox(
-                                width: 8,
-                              ),
-                            Text(
-                              _claimState,
-                              style: const TextStyle(
-                                color: Color.fromARGB(255, 255, 255, 255),
-                                fontSize: 15,
-                                fontFamily: 'Manrope',
-                                fontWeight: FontWeight.w700,
-                                height: 1.33,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                if (shouldShowSpinner)
+                  const SpinKitFadingCircle(
+                    color: Color.fromARGB(255, 255, 255, 255),
+                    size: 15,
+                  ),
+                if (shouldShowSpinner)
+                  const SizedBox(
+                    width: 8,
+                  ),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    _claimState,
+                    style: const TextStyle(
+                      color: Color.fromARGB(255, 255, 255, 255),
+                      fontFamily: 'Manrope',
+                      fontWeight: FontWeight.w700,
+                      height: 1.33,
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
