@@ -296,7 +296,7 @@ class ReclaimHttpsState extends State<ReclaimHttps> {
                               Text(
                                 widget.cta,
                                 style: const TextStyle(
-                                  color: Color.fromARGB(255, 0, 0, 0),
+                                  color: Color.fromARGB(255, 255, 255, 255),
                                   fontSize: 15,
                                   fontFamily: 'Manrope',
                                   fontWeight: FontWeight.w700,
@@ -324,34 +324,63 @@ class ReclaimHttpsState extends State<ReclaimHttps> {
             _claimState == 'Creating Claim';
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (shouldShowSpinner)
-            const SpinKitFadingCircle(
-              color: Color.fromARGB(255, 0, 0, 0),
-              size: 15,
-            ),
-          if (shouldShowSpinner)
-            const SizedBox(
-              width: 8,
-            ),
-          Flexible(
-            child: Text(
-              _claimState,
-              style: TextStyle(
-                color: Colors.black.withOpacity(0.6),
-                fontSize: 13,
-                fontFamily: 'Manrope',
-                fontWeight: FontWeight.w500,
-                height: 1.23,
+      width: double.infinity,
+      clipBehavior: Clip.antiAlias,
+      decoration: const BoxDecoration(),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Material(
+          color: const Color(0xFF322EED).withOpacity(0.6),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: SizedBox(
+                  height: 48,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            if (shouldShowSpinner)
+                              const SpinKitFadingCircle(
+                                color: Color.fromARGB(255, 255, 255, 255),
+                                size: 15,
+                              ),
+                            if (shouldShowSpinner)
+                              const SizedBox(
+                                width: 8,
+                              ),
+                            Text(
+                              _claimState,
+                              style: const TextStyle(
+                                color: Color.fromARGB(255, 255, 255, 255),
+                                fontSize: 15,
+                                fontFamily: 'Manrope',
+                                fontWeight: FontWeight.w700,
+                                height: 1.33,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
