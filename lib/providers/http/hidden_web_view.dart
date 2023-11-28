@@ -64,6 +64,8 @@ class _HiddenWebViewScreenState extends State<HiddenWebViewScreen> {
             }
           }
           if (response["type"] == "createClaimDone") {
+            response['response']['extractedParameterValues'] =
+                widget.parseResult['params'];
             widget.onSuccess(response["response"]);
           }
 
